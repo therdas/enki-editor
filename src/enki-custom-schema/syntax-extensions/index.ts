@@ -1,15 +1,16 @@
 import { Extension } from "prosemirror-unified";
-import { TableCellExtension } from "./TableCell.ts";
-import { TableRowExtension } from "./TableRow.ts";
-import { TableExtension } from "./Table.ts";
-import { TableHeaderExtension } from "./TableHeader.ts";
+import { TableCellExtension } from "./Table/TableCell.ts";
+import { TableRowExtension } from "./Table/TableRow.ts";
+import { TableExtension } from "./Table/Table.ts";
+import { HtmlInlayExtension } from "./Html/HtmlInlay.ts";
 
 export {
     TableCellExtension,
     TableExtension,
     TableRowExtension,
-    TableHeaderExtension
 }
+
+export { HtmlInlayExtension }
 
 export class GFMTableExtension extends Extension {
     public override dependencies(): Array<Extension> {
@@ -17,7 +18,15 @@ export class GFMTableExtension extends Extension {
             new TableExtension(),
             new TableRowExtension(),
             new TableCellExtension(),
-            new TableHeaderExtension()
         ];
+    }
+}
+
+export class MDHtmlInlayExtension extends Extension {
+    public override dependencies(): Array<Extension> {
+        return [
+            new HtmlInlayExtension(),
+
+        ]
     }
 }

@@ -11,7 +11,7 @@ import { gfmTable } from "micromark-extension-gfm-table";
 
 import { Processor } from "unified";
 import { Node } from "unist";
-import { buildUnifiedExtension } from "./BuildExtension";
+import { buildUnifiedExtension } from "../BuildExtension";
 
 export class TableExtension extends NodeExtension<Table> {
     public override proseMirrorNodeName(): string {

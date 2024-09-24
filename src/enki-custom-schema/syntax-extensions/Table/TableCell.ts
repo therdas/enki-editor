@@ -1,4 +1,5 @@
 import type { PhrasingContent, TableCell } from "mdast";
+import { chainCommands } from "prosemirror-commands";
 import { 
     NodeSpec,
     Node as ProseMirrorNode,
@@ -12,43 +13,63 @@ import { createProseMirrorNode, NodeExtension } from "prosemirror-unified";
 
 import { EditorView } from "prosemirror-view";
 
-export function checkForLastCell (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView): boolean {
+export function addRowAfterLast (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView): boolean {
     if(!isInTable(state))
        return false;
 
     let rect = selectedRect(state);
     let table = rect.map;
     
-    console.log(rect.top, "===", table.height, rect.top===table.height)
-
-    if(!view) return true;
+    console.log("Rct", rect.top, table.height, dispatch, view);
 
     // Make new row if it is the last row
-
-    if(rect.top + 1 == table.height){
-        console.log("<>>",rect.top, rect.left, table.height, table.width);
+    if((rect.top + 1 == table.height) && dispatch && view)
         addRowAfter(view.state, dispatch);
-        
-        // If this happens, the references must be hydrated. Changes made to view.
-    } 
 
+    return true;
+}
 
-    // Go to the same col in the next row
-    const map = TableMap.get(view!.state!.doc!.resolve(rect.tableStart)!.node());
-    console.log("GetMapped", map);
-    const $cellStart = map.positionAt(rect.top+1, rect.left, rect.table) + rect.tableStart;
-    const $res = view.state.doc.resolve($cellStart);
-    const $from = $res.node(0).resolve($res.posAtIndex(0, $res.depth + 1) + 1)
-    const offset = $from.nodeAfter?.nodeSize ?? 0;
-    const $to = $from.node(0).resolve($from.pos + offset);
+export function moveToNextRow(state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView): boolean {
+    if(!isInTable(state))
+        return false;
 
-    dispatch!(state.tr.setSelection(new TextSelection($from, $to)).scrollIntoView())
+    let rect = selectedRect(state);
+
+    console.log(rect.top,rect.left, rect.map.height, rect.map.width);
+
+    let row = rect.top;
+    let col = rect.left;
+    let map = rect.map;
+
+    if(row >= map.height - 1 || col >= map.width - 1)
+        return false;
+
+    console.log("OKE");
+    const selStart = map.positionAt(row + 1, col, rect.table) + rect.tableStart + 1; // +1 because we want to point _inside_ the cell.
+    const $selStart = view?.state.doc.resolve(selStart);
+    const $selEnd = view?.state.doc.resolve(($selStart?.pos ?? 0) + ($selStart?.nodeAfter?.nodeSize ?? 0))
+
+    if(!$selStart) return false;
+
+    console.log("OKEOKE");
+
+    if(dispatch) dispatch( state.tr.setSelection( new TextSelection( $selStart, $selEnd ) ).scrollIntoView() )
 
     return true;
 }
 
 export function nullCmd (state: EditorState, dispatch?: (tr: Transaction) => void): boolean {
     return true;
+}
+
+export function composeCommands(...commands: readonly Command[]): Command{
+    return function (state, dispatch, view) {
+        for(let command of commands) {
+            if(!view) return false;
+            if(command(view.state, dispatch, view) == false) return false;
+        }
+        return true;
+    }
 }
 
 
@@ -62,8 +83,9 @@ Record<"table_cell", unknown>
         return {
             Tab: goToNextCell(1),
             "Shift-Tab": goToNextCell(-1),
-            Enter: checkForLastCell,
-            "Shift-Enter": nullCmd
+            Enter: composeCommands(addRowAfterLast, moveToNextRow),
+            "Shift-Enter": nullCmd,
+            
         }
     }
 

@@ -5,29 +5,32 @@ import { EditorState} from "prosemirror-state"
 import { dropCursor } from "prosemirror-dropcursor"
 import { gapCursor } from "prosemirror-gapcursor"
 import { history } from "prosemirror-history"
-import { GFMTableExtension } from "./enki-custom-schema/syntax-extensions"
+import { GFMTableExtension, HtmlInlayExtension } from "./enki-custom-schema/syntax-extensions"
 import { tableEditing, columnResizing, tableNodes, fixTables, goToNextCell } from "prosemirror-tables"
 import { keymap } from "prosemirror-keymap"
-import { TableView } from "./enki-custom-schema/syntax-extensions/TableView"
+import { TableView } from "./enki-custom-schema/syntax-extensions/Table/TableView"
+
+import { data } from "./data"
 
 import "../style.sass"
 class EnkiEditor {
   public view;
-  private pmu = new ProseMirrorUnified([new GFMExtension, new GFMTableExtension]);
+  private pmu = new ProseMirrorUnified([new GFMExtension, new GFMTableExtension, new HtmlInlayExtension]);
 
   constructor(target: HTMLElement, content: string) {
+    console.log(">>>>>>:::",this.pmu.parse(content), this.pmu.schema());
     target.replaceChildren();
     this.view = new EditorView(target, {
       state: EditorState.create({
         doc: this.pmu.parse(content),
         plugins: [
-          this.pmu.inputRulesPlugin(), 
-          this.pmu.keymapPlugin(), 
           dropCursor(), 
           gapCursor(), 
+          this.pmu.inputRulesPlugin(), 
+          this.pmu.keymapPlugin(), 
           history(), 
           columnResizing({View: TableView}), 
-          tableEditing(), 
+          tableEditing(),
           keymap({
             "Tab": goToNextCell(1),
             "Shift-Tab": goToNextCell(-1)
@@ -58,7 +61,7 @@ class EnkiEditor {
 
 window.onload = () => {
   let place = document.querySelector("#editor");
-  let view: EnkiEditor = new EnkiEditor(<HTMLElement>place, place?.textContent ?? "");  
+  let view: EnkiEditor = new EnkiEditor(<HTMLElement>place, data);  
   let dragHandle = new DragHandle(document.getElementById("draghandle")!, view.view);
 }
 
@@ -135,7 +138,23 @@ class DragHandle {
 
     let nodeSelected = this.getNodeAtPosition(pos);
     if(!nodeSelected) return;
+    console.log("Drag ended :(");
 
+
+    //     e.preventDefault();
+    //     e.stopImmediatePropagation();
+    //     e.stopPropagation();
+    //   });
+    // }
+    
+    // function updateDraggerPos(x: number, y: number) {
+    //   let elem = document.getElementById("draghandle");
+    //   if(!elem) return;
+    //   // elem.style.left = ""+ (x - 50)+ "px";
+    //   elem.style.left = ""+ (x - 50) + "px";
+    //   elem.style.top = ""+ (y - 0) + "px";
+    // }
+    
     let rect = this.view.coordsAtPos(nodeSelected.pos);
 
     this.updateHandlePosition({left: rect.left, top: rect.top});
@@ -164,8 +183,8 @@ class DragHandle {
 
 //     let elem = document.getElementById("draghandle");
 //     if(!elem) return;
-
-//     let pos = view.view.posAtCoords({left: x, top: y});
+// console.log("OKE");
+// Coords({left: x, top: y});
 
 //     if(pos!.pos == -1 || pos?.inside == -1)
 //         return
@@ -198,7 +217,8 @@ class DragHandle {
 
 //     view.focus();
 
-//     if(!e.dataTransfer)
+//     if(!e.dataTransfer)KE");
+// Coords({left: x, top: 
 //       return;
 
 //     let x = e.clientX;
@@ -222,7 +242,23 @@ class DragHandle {
 //     e.dataTransfer.clearData();
 //     e.dataTransfer.effectAllowed = "move";
 //     e.dataTransfer.setData("text/html", dom.innerHTML);
-//     e.dataTransfer.setData("text/plain", text);
+//     e.dataTransfer.setData("text/plain", text);onsole.log("Drag ended :(");
+
+
+//     e.preventDefault();
+//     e.stopImmediatePropagation();
+//     e.stopPropagation();
+//   });
+// }
+
+// function updateDraggerPos(x: number, y: number) {
+//   let elem = document.getElementById("draghandle");
+//   if(!elem) return;
+//   // elem.style.left = ""+ (x - 50)+ "px";
+//   elem.style.left = ""+ (x - 50) + "px";
+//   elem.style.top = ""+ (y - 0) + "px";
+// }
+
 //     e.dataTransfer.setDragImage(<Element>node!, 0, 0);
 
 //     view.view.dragging = {slice, move: true }

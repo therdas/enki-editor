@@ -1,13 +1,6 @@
 import { Node as PMNode } from 'prosemirror-model';
-import { Decoration, DecorationSet, NodeView } from 'prosemirror-view';
+import { NodeView } from 'prosemirror-view';
 import { updateColumnsOnResize } from 'prosemirror-tables';
-import { EditorState, Plugin, PluginKey } from 'prosemirror-state';
-
-interface CellAttrs {
-    colspan: number;
-    rowspan: number;
-    colwidth: number[] | null;
-}
 
 /**
  * @public
