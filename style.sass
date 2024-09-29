@@ -78,3 +78,33 @@
 
 .ProseMirror-focused .ProseMirror-gapcursor
   display: block
+
+
+
+.prosemirror-html-editable
+    display: inline
+    min-height: 20px
+    position: relative
+    min-width: 20px
+    background-color: #000000ff
+
+    &::before
+        display: inline-block
+        content: ""
+        height: 1em
+        width: 3px
+
+    .prosemirror-raw-html-editor
+        position: absolute
+        top: -20px
+        left: 0
+        caret: purple underscore
+        z-index: 5
+        box-sizing: border-box
+        background-color: #ffffffee
+        border: 1px solid black
+        border-radius: 3px
+        min-width: 200px
+        font-family: monospace
+
+        

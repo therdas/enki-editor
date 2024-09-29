@@ -13,6 +13,7 @@ import { TableView } from "./enki-custom-schema/syntax-extensions/Table/TableVie
 import { data } from "./data"
 
 import "../style.sass"
+import { HtmlInlayView } from "./enki-custom-schema/syntax-extensions/Html/HtmlInlay"
 class EnkiEditor {
   public view;
   private pmu = new ProseMirrorUnified([new GFMExtension, new GFMTableExtension, new HtmlInlayExtension]);
@@ -37,7 +38,10 @@ class EnkiEditor {
           }),
         ],
         schema: this.pmu.schema(),
-      })
+      }),
+      nodeViews: {
+        html(node, view, getPos) { return new HtmlInlayView(node, view, getPos) },
+      }
     })
   }
 

@@ -28,14 +28,27 @@
     "vite": "^5.2.0"
   },
   "dependencies": {
+    "@codemirror/commands": "^6.6.2",
+    "@codemirror/lang-html": "^6.4.9",
+    "@codemirror/lang-javascript": "^6.2.2",
+    "@codemirror/state": "^6.4.1",
+    "@codemirror/view": "^6.34.1",
     "@types/markdown-it": "^14.1.1",
     "@types/mdast": "^4.0.4",
     "lodash": "^4.17.21",
     "markdown-it": "^14.1.0",
+    "mdast-util-from-markdown": "^2.0.1",
     "mdast-util-gfm-table": "^2.0.0",
+    "micromark-core-commonmark": "^2.0.1",
     "micromark-extension-gfm-table": "^2.1.0",
+    "micromark-util-types": "^2.0.0",
     "prosemirror-remark": "^0.6.0",
+    "prosemirror-transform": "^1.10.0",
     "prosemirror-unified": "^0.8.0",
-    "remark": "^15.0.1"
+    "remark": "^15.0.1",
+    "unist": "^0.0.1",
+    "unist-util-is": "^6.0.0",
+    "unist-util-visit": "^5.0.0",
+    "unist-util-visit-parents": "^6.0.1"
   }
 }
