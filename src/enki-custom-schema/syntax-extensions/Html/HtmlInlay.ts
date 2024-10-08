@@ -18,15 +18,91 @@ import remarkFixRootHTML from "../../plugins/html";
 export class HtmlInlayView implements NodeView {
     dom: HTMLElement;
     innerView: EditorView | null;
+    tagName: string | undefined;
+    isFlow: boolean;
 
     constructor(public node: ProseMirrorNode, public outerView: EditorView, public getPos: () => number | undefined ) {
-        console.log("WHAT");
-        this.dom = document.createElement("div");
-        this.dom.classList.add("prosemirror-html-editable")
-        this.dom.innerHTML = node.textContent;
-        this.innerView = null;
 
+        let elem = this.createElementFromString(node.textContent);
+        this.dom = elem.element;
+        this.isFlow = elem.isFlow;
+        
+        console.log("A?", elem, node.textContent);
+
+        this.dom.classList.add("prosemirror-html-editable");
+        this.innerView = null;
         this.dom.addEventListener("click", this.openAndFocusOnInner);
+    }
+
+    createElementFromString(html: string): {
+        element: HTMLElement,
+        isFlow: boolean
+    } {
+        let dom: HTMLElement | null = null;
+        let res = HtmlInlayView.checkIfFlow(html);
+
+        if(res.isFlow) {
+            this.tagName = res.tag;
+
+            let template = document.createElement('template');
+            template.innerHTML = html;
+            dom = <HTMLElement>(template.content.firstChild!);
+        }
+
+        if(dom === null) {
+            dom = document.createElement("div");
+            dom.innerHTML = html;
+        }
+
+        return {
+            element: dom,
+            isFlow: res.isFlow
+        }
+    }
+
+    /**
+     * Check if the value of this node (contained HTML) can be parsed as a single tag.
+     * @param html String to be checked
+     * @returns true, if the html is a single tag, false otherwise
+     */
+    static checkIfFlow(html: string): {
+        isFlow: boolean, 
+        tag?: string, 
+        type?: 'opening' | 'closing' | 'other'
+    } {
+        // Check if string starts with '<', ends with '>' and has only one of each tag.
+        const single =  html[0] == "<" && (html.match(/</g)||[]).length == 1 &&
+                        html[html.length - 1] == ">" && (html.match(/>/g)||[]).length == 1;
+
+        // Given that the node is a single tag (flow), we can assume it to
+        // be well formed. We just need to check for the type of node it is.
+        const comment = single && (html.slice(1, 3) === "--");
+        const closing = single && (html[1] == "/");
+        const processing = single && (html[1] == "?");
+        const declaration = single && (html[1] == "!");
+        const CDATA = single && (html.slice(1, 9) === "![CDATA[");
+
+        
+        // We can use a simple extraction of the string from [1, <first occurence of a space character>].
+        if(comment || processing || declaration || CDATA) {
+            return {
+                isFlow: true,
+                tag: undefined,
+                type: 'other'
+            }
+        } else if(single)  {
+            const close = Math.min(html.indexOf(' '), html.indexOf(">"), html.indexOf('/'));
+            const tagName = html.slice(closing ? 2 : 1, close);
+            return {
+                isFlow: true, 
+                tag: tagName,
+                type: closing ? 'opening' : 'closing',
+            }
+        } else return {
+            isFlow: false,
+            tag: undefined,
+            type: undefined
+        }
     }
 
     selectNode() {
@@ -48,7 +124,10 @@ export class HtmlInlayView implements NodeView {
         }
     }
 
+    // Do not let `flow` type elements to be edited
     open() {
+        if(this.isFlow) return;
+
         let editableArea = this.dom.appendChild(document.createElement("div"));
         editableArea.className = "ProseMirror-edithtml";
         this.innerView = new EditorView(editableArea, {
