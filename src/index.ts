@@ -1,6 +1,6 @@
 import { EditorView } from "prosemirror-view"
 import { ProseMirrorUnified } from "prosemirror-unified"
-import { GFMExtension } from "prosemirror-remark"
+import { eGFMExtension, GFMEditableTasklistExtension } from "./enki-custom-schema/syntax-extensions"
 import { EditorState} from "prosemirror-state"
 import { dropCursor } from "prosemirror-dropcursor"
 import { gapCursor } from "prosemirror-gapcursor"
@@ -13,13 +13,15 @@ import { TableView } from "./enki-custom-schema/syntax-extensions/Table/TableVie
 import { data } from "./data"
 
 import "../style.sass"
-import { HtmlInlayView } from "./enki-custom-schema/syntax-extensions/Html/HtmlInlay"
+import { HtmlExtension }  from "./enki-custom-schema/syntax-extensions/Html/HtmlExtension"
+import { HtmlEditableView } from "./enki-custom-schema/syntax-extensions/Html/HtmlView"
+import { EFMTagExtension } from "./enki-custom-schema/syntax-extensions/Tags/remarkUnifiedTagExtension"
+import { LinkView, WikiLinkItemExtension } from "./enki-custom-schema/syntax-extensions/wiki-links/wikiLink"
 class EnkiEditor {
   public view;
-  private pmu = new ProseMirrorUnified([new GFMExtension, new GFMTableExtension, new HtmlInlayExtension]);
+  private pmu = new ProseMirrorUnified([new eGFMExtension, new GFMTableExtension, new HtmlExtension, new GFMEditableTasklistExtension, new EFMTagExtension, new WikiLinkItemExtension]);
 
   constructor(target: HTMLElement, content: string) {
-    console.log(">>>>>>:::",this.pmu.parse(content), this.pmu.schema());
     target.replaceChildren();
     this.view = new EditorView(target, {
       state: EditorState.create({
@@ -40,7 +42,8 @@ class EnkiEditor {
         schema: this.pmu.schema(),
       }),
       nodeViews: {
-        html(node, view, getPos) { return new HtmlInlayView(node, view, getPos) },
+        html (node, view, getPos) { return new HtmlEditableView(node, view, getPos) },
+        wikilink (node, view, getPos) {return new LinkView(node, view, getPos)},
       }
     })
   }

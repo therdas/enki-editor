@@ -27,11 +27,21 @@ can [see the source for it by adding '.text' to the URL](/projects/markdown/synt
 
 ----
 
+what's up #hefegeeyworld
+
+you need to find this at the topic #AI/LLMs
+
+[[what#Section: okay, WHAT]]
+
 ## Changes sync'd
 
-<br> hello woraefegld </b>
+<b>hello woraefegld</b>
 
-testing <b>mark</b> testing
+[Link!](other-page)
+
+testing <b>markdowner</b> testing
+<font family="courier">
+<hr width="500px" height="20px">
 
 <div>
 <b>   hey world   </b>
