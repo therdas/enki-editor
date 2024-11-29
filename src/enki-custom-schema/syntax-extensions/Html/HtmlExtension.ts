@@ -1,5 +1,6 @@
 import type { Html, Text } from "mdast";
 import { 
+    DOMOutputSpec,
     NodeSpec,
     Node as ProseMirrorNode,
     Schema
@@ -34,8 +35,7 @@ export class HtmlExtension extends NodeExtension<Html> {
             inline: true,
             atom: true,
             marks: '',
-            code: true,
-            defining: true
+            code: true
         }
     }
 

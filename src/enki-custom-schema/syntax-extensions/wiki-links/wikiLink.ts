@@ -59,12 +59,11 @@ Record<"wiki_link", unknown>
     proseMirrorNodeSpec(): NodeSpec {
         return {
             group: 'inline',
-            content: 'text*',
+            // content: 'text*',
             inline: true,
             atom: true,
             marks: '',
             code: true,
-            defining: true,
             attrs: { href: {default: null}, title: { default: null }},
             parseDOM: [
                 {

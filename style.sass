@@ -79,33 +79,39 @@
 .ProseMirror-focused .ProseMirror-gapcursor
   display: block
 
+.cm-scroller
+    height: auto !important
+    width: auto !important
+    overflow-y: visible
+    &:has(.cm-html-editor-inactive)
+        height: 0px !important
 
+.cm-content
+    display: inline !important
+    overflow-y: visible
+    padding: 0 !important
 
-.prosemirror-html-editable
-    display: inline-block
-    min-height: 1em
+.cm-editor.cm-focused
+    outline: none
     position: relative
-    min-width: 1em
-    background-color: #00000010
+    top: -1px
+    margin-bottom: 1px
 
-    &::before
-        display: inline-block
-        content: ""
-        height: 1em
-        width: 3px
+.cm-html-renderer-inactive
+    height: 0
+    overflow: hidden
+    
+.cm-html-editor-inactive
+    width: 1px !important
+    height: 1px !important
+    overflow: hidden
+    position: relative
+    opacity: 0 !important
+    top: 16px !important
+    display: inline-block !important
 
-    .prosemirror-raw-html-editor
-        position: absolute
-        top: -20px
-        left: 0
-        caret: purple underscore
-        z-index: 5
-        box-sizing: border-box
-        background-color: #ffffffee
-        border: 1px solid black
-        border-radius: 3px
-        min-width: 200px
-        min-height: 400px
-        font-family: monospace
-
-        
+.cm-editor 
+    
+    display: inline-block !important
+    overflow-y: visible
+    vertical-align: middle
