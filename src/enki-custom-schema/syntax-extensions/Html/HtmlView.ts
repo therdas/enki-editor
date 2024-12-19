@@ -27,7 +27,7 @@ export class HtmlEditableView implements NodeView {
     tagName: string | undefined;
     updating: boolean;
 
-    constructor(public node: ProseMirrorNode, public outerView: EditorView, public getPos: () => number) {
+    constructor(public node: ProseMirrorNode, public outerView: EditorView, public getPos: () => number | undefined) {
         this.codeMirror = new CodeMirror({
             doc: this.node.textContent,
             extensions: [
@@ -110,7 +110,7 @@ export class HtmlEditableView implements NodeView {
         // @ts-ignore
         if (unit == "line") main = state.doc.lineAt(main.head)
         if (dir < 0 ? main.from > 0 : main.to < state.doc.length) return false
-        let targetPos = this.getPos() + (dir < 0 ? 0 : this.node.nodeSize)
+        let targetPos = this.getPos() ?? 0 + (dir < 0 ? 0 : this.node.nodeSize)
         let selection = Selection.near(this.outerView.state.doc.resolve(targetPos), dir)
         let tr = this.outerView.state.tr.setSelection(selection).scrollIntoView()
         this.outerView.dispatch(tr)

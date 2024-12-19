@@ -10,6 +10,7 @@ import { Processor } from "unified"
 import { buildUnifiedExtension } from "../BuildExtension"
 import { Decoration, DecorationSource, EditorView, NodeView } from "prosemirror-view"
 import { TextExtension } from "prosemirror-remark"
+import { InputRule, textblockTypeInputRule, wrappingInputRule } from "prosemirror-inputrules"
 
 export class LinkView implements NodeView {
     dom: HTMLAnchorElement
@@ -22,7 +23,7 @@ export class LinkView implements NodeView {
     }
 }
 
-export interface WikiLink extends Parent, Resource {
+export interface WikiLink extends uNode {
     type: "wikiLink",
     data: {
         alias: string,
@@ -33,14 +34,28 @@ export interface WikiLink extends Parent, Resource {
             className: string,
             href: string
         },
-        hchildren: Text[],
     }
 }
 
 export class WikiLinkItemExtension extends NodeExtension<
 WikiLink,
-Record<"wiki_link", unknown>
+Record<"wikilink", unknown>
 > {
+    public override proseMirrorInputRules(proseMirrorSchema: Schema<string, string>): Array<InputRule> {
+        return [
+            wrappingInputRule(
+                /^\[\[\[([^\|\[\]]{1,})(?:\|([^\|\]\[]]*))?\]\]\]$/,
+                proseMirrorSchema.nodes[this.proseMirrorNodeName()],
+                (match: string[]) => {
+                    console.log("Capturin'", match, proseMirrorSchema.nodes[this.proseMirrorNodeName()], proseMirrorSchema)
+                    return {
+                        href: match[1],
+                        title: match[2]
+                    }
+                }
+            )
+        ]
+    }
 
     public override dependencies(): Array<Extension> {
         return [
@@ -49,7 +64,21 @@ Record<"wiki_link", unknown>
     }
 
     proseMirrorNodeToUnistNodes(node: Node, convertedChildren: Array<uNode>): WikiLink[] {
-        throw new Error("Method not implemented.")
+        return [
+            {
+                type: "wikiLink",
+                data: {
+                    alias: node.attrs['title'],
+                    permalink: node.attrs['href'],
+                    exists: false,
+                    hName: "a",
+                    hProperties: {
+                        className: "",
+                        href: node.attrs['href']
+                    },
+                },
+            }
+        ]
     }
 
     proseMirrorNodeName(): 'wikilink' {
@@ -59,7 +88,6 @@ Record<"wiki_link", unknown>
     proseMirrorNodeSpec(): NodeSpec {
         return {
             group: 'inline',
-            // content: 'text*',
             inline: true,
             atom: true,
             marks: '',
@@ -80,6 +108,7 @@ Record<"wiki_link", unknown>
                 },
             ],
             toDOM(node: Node): DOMOutputSpec {
+                console.log(node,"!!");
                 return ["a", node.attrs, 0];
             },
         }

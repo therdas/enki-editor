@@ -51,6 +51,8 @@ export function remarkCombineHTMLTagPairs() {
       }
     })
 
+    if(htmlNodes.length == 0) return;
+
     let currentIndex = 0;
     let currentName = nodeNameFromHtmlString(htmlNodes[currentIndex][0].value);
     let currentNode = htmlNodes[currentIndex][1];

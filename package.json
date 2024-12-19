@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --host",
     "build": "tsc && vite build",
     "preview": "vite preview"
   },
@@ -40,14 +40,21 @@
     "mdast-util-find-and-replace": "^3.0.1",
     "mdast-util-from-markdown": "^2.0.1",
     "mdast-util-gfm-table": "^2.0.0",
+    "mdast-util-taggable": "^1.2.1",
     "mdast-util-to-markdown": "^2.1.2",
+    "mdast-util-wiki-link": "https://github.com/therdas/mdast-util-wiki-link",
     "micromark-core-commonmark": "^2.0.1",
     "micromark-extension-gfm-table": "^2.1.0",
+    "micromark-extension-taggable": "^1.0.1",
+    "micromark-extension-wiki-link": "https://github.com/therdas/micromark-extension-wiki-link",
     "micromark-util-types": "^2.0.0",
+    "prosemirror-autocomplete": "^0.4.3",
     "prosemirror-remark": "^0.6.0",
     "prosemirror-transform": "^1.10.0",
     "prosemirror-unified": "^0.8.0",
     "remark": "^15.0.1",
+    "remark-taggable": "^1.0.1",
+    "remark-wiki-link": "https://github.com/therdas/remark-wiki-link.git#ca597e9c147e01b6e9c492f5c91137b28cce3b95",
     "unist": "^0.0.1",
     "unist-util-find": "^3.0.0",
     "unist-util-find-all-after": "^5.0.0",
@@ -55,9 +62,6 @@
     "unist-util-is": "^6.0.0",
     "unist-util-remove": "^4.0.0",
     "unist-util-visit": "^5.0.0",
-    "unist-util-visit-parents": "^6.0.1",
-    "mdast-util-wiki-link": "https://github.com/therdas/mdast-util-wiki-link",
-    "micromark-extension-wiki-link": "https://github.com/therdas/micromark-extension-wiki-link",
-    "remark-wiki-link": "https://github.com/therdas/remark-wiki-link.git#ca597e9c147e01b6e9c492f5c91137b28cce3b95"
+    "unist-util-visit-parents": "^6.0.1"
   }
 }

@@ -15,11 +15,16 @@ import { data } from "./data"
 import "../style.sass"
 import { HtmlExtension }  from "./enki-custom-schema/syntax-extensions/Html/HtmlExtension"
 import { HtmlEditableView } from "./enki-custom-schema/syntax-extensions/Html/HtmlView"
-import { EFMTagExtension } from "./enki-custom-schema/syntax-extensions/Tags/remarkUnifiedTagExtension"
 import { LinkView, WikiLinkItemExtension } from "./enki-custom-schema/syntax-extensions/wiki-links/wikiLink"
+import { TaggableExtension } from "./enki-custom-schema/syntax-extensions/Taggable/taggable"
+import autocomplete from 'prosemirror-autocomplete'
+import { reducer } from "./reducers"
+
+
+
 class EnkiEditor {
   public view;
-  private pmu = new ProseMirrorUnified([new eGFMExtension, new GFMTableExtension, new HtmlExtension, new GFMEditableTasklistExtension, new EFMTagExtension, new WikiLinkItemExtension]);
+  private pmu = new ProseMirrorUnified([new eGFMExtension, new GFMTableExtension, new HtmlExtension, new GFMEditableTasklistExtension, new WikiLinkItemExtension, new TaggableExtension]);
 
   constructor(target: HTMLElement, content: string) {
     target.replaceChildren();
@@ -38,6 +43,13 @@ class EnkiEditor {
             "Tab": goToNextCell(1),
             "Shift-Tab": goToNextCell(-1)
           }),
+          ...autocomplete({
+            triggers: [
+              { name: 'tag', trigger: '#' },
+              { name: 'mention', trigger: '@' },
+            ],
+            reducer: reducer,
+          })
         ],
         schema: this.pmu.schema(),
       }),

@@ -1,5 +1,4 @@
-export const data = `
-# Markdown: Syntax
+export const data = `# Markdown: Syntax
 
 *   [Overview](#overview)
     *   [Philosophy](#philosophy)
@@ -25,6 +24,8 @@ export const data = `
 **Note:** This document is itself written using Markdown; you
 can [see the source for it by adding '.text' to the URL](/projects/markdown/syntax.text).
 
+@timothy are ya there
+
 ----
 
 what's up #hefegeeyworld
@@ -32,8 +33,7 @@ what's up #hefegeeyworld
 you need to find this at the topic #AI/LLMs
 
 [[what#Section: okay, WHAT]]
-
-## Changes sync'd
+afefe [[Permalink]]
 
 <b>hello woraefegld</b>
 

@@ -1,5 +1,5 @@
 import { Node as PMNode } from 'prosemirror-model';
-import { NodeView } from 'prosemirror-view';
+import { EditorView, NodeView, ViewMutationRecord } from 'prosemirror-view';
 import { updateColumnsOnResize } from 'prosemirror-tables';
 
 /**
@@ -11,7 +11,7 @@ export class TableView implements NodeView {
   public colgroup: HTMLTableColElement;
   public contentDOM: HTMLTableSectionElement;
 
-  constructor(public node: PMNode, public cellMinWidth: number) {
+  constructor(public node: PMNode, public cellMinWidth: number, view: EditorView) {
     this.dom = document.createElement('div');
     this.dom.className = 'tableWrapper';
     this.table = this.dom.appendChild(document.createElement('table'));
@@ -29,7 +29,7 @@ export class TableView implements NodeView {
     return true;
   }
 
-  ignoreMutation(record: MutationRecord): boolean {
+  ignoreMutation(record: ViewMutationRecord): boolean {
     return (
       record.type == 'attributes' &&
       (record.target == this.table || this.colgroup.contains(record.target))
