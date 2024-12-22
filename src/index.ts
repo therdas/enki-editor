@@ -4,9 +4,9 @@ import { eGFMExtension, GFMEditableTasklistExtension } from "./enki-custom-schem
 import { EditorState} from "prosemirror-state"
 import { dropCursor } from "prosemirror-dropcursor"
 import { gapCursor } from "prosemirror-gapcursor"
-import { history } from "prosemirror-history"
-import { GFMTableExtension, HtmlInlayExtension } from "./enki-custom-schema/syntax-extensions"
-import { tableEditing, columnResizing, tableNodes, fixTables, goToNextCell } from "prosemirror-tables"
+import { history, redo, undo } from "prosemirror-history"
+import { GFMTableExtension } from "./enki-custom-schema/syntax-extensions"
+import { tableEditing, columnResizing, goToNextCell } from "prosemirror-tables"
 import { keymap } from "prosemirror-keymap"
 import { TableView } from "./enki-custom-schema/syntax-extensions/Table/TableView"
 
@@ -15,12 +15,19 @@ import { data } from "./data"
 import "../style.sass"
 import { HtmlExtension }  from "./enki-custom-schema/syntax-extensions/Html/HtmlExtension"
 import { HtmlEditableView } from "./enki-custom-schema/syntax-extensions/Html/HtmlView"
-import { LinkView, WikiLinkItemExtension } from "./enki-custom-schema/syntax-extensions/wiki-links/wikiLink"
+import { WikiLinkItemExtension } from "./enki-custom-schema/syntax-extensions/wiki-links/wikiLink"
 import { TaggableExtension } from "./enki-custom-schema/syntax-extensions/Taggable/taggable"
-import autocomplete from 'prosemirror-autocomplete'
+import autocomplete, { Options as PMAOptions } from 'prosemirror-autocomplete'
 import { reducer } from "./reducers"
 
-
+const autocompleteOpts: PMAOptions = {
+  triggers: [
+    { name: 'hashtag', trigger: '#' },
+    { name: 'mention', trigger: '@' },
+    { name: 'dropdown', trigger: '/' },
+  ],
+  reducer,
+}
 
 class EnkiEditor {
   public view;
@@ -32,30 +39,27 @@ class EnkiEditor {
       state: EditorState.create({
         doc: this.pmu.parse(content),
         plugins: [
+          ...autocomplete(autocompleteOpts),
           dropCursor(), 
           gapCursor(), 
           this.pmu.inputRulesPlugin(), 
           this.pmu.keymapPlugin(), 
           history(), 
+
           columnResizing({View: TableView}), 
           tableEditing(),
           keymap({
             "Tab": goToNextCell(1),
-            "Shift-Tab": goToNextCell(-1)
+            "Shift-Tab": goToNextCell(-1),
+            "Mod-z": undo,
+            "Mod-y": redo, 
           }),
-          ...autocomplete({
-            triggers: [
-              { name: 'tag', trigger: '#' },
-              { name: 'mention', trigger: '@' },
-            ],
-            reducer: reducer,
-          })
+          
         ],
         schema: this.pmu.schema(),
       }),
       nodeViews: {
         html (node, view, getPos) { return new HtmlEditableView(node, view, getPos) },
-        wikilink (node, view, getPos) {return new LinkView(node, view, getPos)},
       }
     })
   }

@@ -291,16 +291,12 @@ const HtmlRenderPlugin = ViewPlugin.fromClass(
             this.container.classList.add('cm-html-renderer');
             this.dom = view.dom;
 
-            console.log("plugin created with code", this.html)
-
             this.container.innerHTML = this.html;
             view.dom.appendChild(this.container);
             
         }
 
         update(update: ViewUpdate) {
-            console.log("DIV", update.view.contentDOM);
-           
             this.html = update.state.doc.toString();
             this.container.innerHTML = this.html;
             

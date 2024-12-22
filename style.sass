@@ -116,18 +116,17 @@
     display: inline-block !important
 
 .cm-editor 
-    
     display: inline-block !important
     overflow-y: visible
     vertical-align: middle
 
-
-#suggestion 
+.suggestions
     display: block
-    position: fixed
+    position: absolute
     top: 0
     left: 0
-    z-index: 1000
-    width: 300px
-    height: 300px
-    background-color: rgba(100%, 0, 0, 20%)
+    min-width: 300px
+    background-color: white
+    min-height: 600px
+    .selected
+        background-color: yellow

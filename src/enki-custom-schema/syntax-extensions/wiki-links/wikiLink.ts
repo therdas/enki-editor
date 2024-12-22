@@ -1,60 +1,106 @@
 //@ts-ignore
 import { syntax as wikiLinkMicromarkExtension } from "micromark-extension-wiki-link"
 import { fromMarkdown, toMarkdown } from "mdast-util-wiki-link"
-import { wikiLinkPlugin } from "remark-wiki-link"
-import { createProseMirrorNode, Extension, MarkExtension, NodeExtension } from "prosemirror-unified"
-import { Data, Node as uNode, Position } from "unist"
-import { Parent, PhrasingContent, Resource, TableCell, Text } from "mdast"
-import { NodeSpec, Schema, Mark, Node, DOMOutputSpec, Attrs, ContentMatch, Fragment, MarkType, NodeType, ResolvedPos, Slice, MarkSpec } from "prosemirror-model"
+import { Extension, MarkExtension } from "prosemirror-unified"
+import { Node as uNode } from "unist"
+import { Schema, Node, DOMOutputSpec, Mark, MarkSpec } from "prosemirror-model"
 import { Processor } from "unified"
 import { buildUnifiedExtension } from "../BuildExtension"
-import { Decoration, DecorationSource, EditorView, NodeView } from "prosemirror-view"
+import { EditorView, NodeView } from "prosemirror-view"
 import { TextExtension } from "prosemirror-remark"
-import { InputRule, textblockTypeInputRule, wrappingInputRule } from "prosemirror-inputrules"
-
-export class LinkView implements NodeView {
-    dom: HTMLAnchorElement
-
-    constructor(public node: Node, outerView: EditorView, public getPos: () => number | undefined) {
-        this.dom = document.createElement('a');
-        this.dom.classList.add('inner-link')
-        this.dom.href = node.attrs['href']
-        this.dom.textContent = node.attrs['title']
-    }
-}
+import { InputRule, wrappingInputRule } from "prosemirror-inputrules"
+import { Text } from "mdast"
+import { Command, EditorState, Transaction } from "prosemirror-state"
 
 export interface WikiLink extends uNode {
     type: "wikiLink",
     data: {
         alias: string,
         permalink: string,
-        exists: boolean,
-        hName: 'a',
-        hProperties: {
-            className: string,
-            href: string
-        },
     }
 }
 
-export class WikiLinkItemExtension extends NodeExtension<
-WikiLink,
-Record<"wikilink", unknown>
-> {
+export function resolve(arg: string) {
+    return `/pages/${arg}`;
+}
+
+export class WikiLinkItemExtension extends MarkExtension<WikiLink> {
     public override proseMirrorInputRules(proseMirrorSchema: Schema<string, string>): Array<InputRule> {
         return [
-            wrappingInputRule(
-                /^\[\[\[([^\|\[\]]{1,})(?:\|([^\|\]\[]]*))?\]\]\]$/,
-                proseMirrorSchema.nodes[this.proseMirrorNodeName()],
-                (match: string[]) => {
-                    console.log("Capturin'", match, proseMirrorSchema.nodes[this.proseMirrorNodeName()], proseMirrorSchema)
-                    return {
-                        href: match[1],
-                        title: match[2]
+            new InputRule(
+                /\[\[[^\[\]]*\]\]$/,
+                (state, match, start, end): Transaction => {
+                    let alias = '';
+                    let url = '';
+                    if(match[0].indexOf('|') !== -1) {
+                        match[0].split('|')
                     }
+                    return state.tr.replaceWith(start, end, 
+                        state.schema.text(
+                            match[0].slice(2, -2),
+                            [
+                                state.schema.marks[this.proseMirrorMarkName()].create({
+                                    href: resolve(match[0].slice(2, -2)),
+                                })
+                            ]
+                        )
+                    )
                 }
             )
         ]
+    }
+
+    public proseMirrorKeymap(proseMirrorSchema: Schema<string, string>): Record<string, Command> {
+        return {
+            'Backspace': (state, dispatch) => {
+                const mark = state.doc.resolve(state.selection.head - 1)
+                    .marks()
+                    .filter((mark) => mark.type.name === this.proseMirrorMarkName())[0]
+                
+                if(!mark)
+                    return false;
+
+                const type = mark.type.name;
+
+                if(type !== this.proseMirrorMarkName())
+                    return false;
+
+                let $start = state.doc.resolve(state.selection.head - 1);
+                let endIdx = $start.indexAfter();
+                let startIdx = $start.index();
+
+
+                while(
+                       startIdx > 0 && 
+                       mark.isInSet($start.parent.child(startIdx - 1).marks)
+                ) startIdx--;
+                while (
+                    endIdx < $start.parent.childCount &&
+                    mark.isInSet($start.parent.child(endIdx).marks)
+                ) endIdx++;
+
+                let startPos = $start.start(), endPos = startPos;
+                for (let i = 0; i < endIdx; i++) {
+                    let size = $start.parent.child(i).nodeSize
+                    if(i < startIdx) startPos += size
+                        endPos += size
+                }
+
+                // We have start and endpos now lets do the thang
+                const text = state.doc.textBetween(startPos, endPos);
+                if(dispatch){
+                    let url = mark.attrs.href;
+                    let alias = text;
+                    if(alias == url)
+                        dispatch(state.tr.replaceWith(startPos, endPos, state.schema.text(`[[${url}]`)));
+                    else
+                    dispatch(state.tr.replaceWith(startPos, endPos, state.schema.text(`[[${url} : alias]`)));
+                    return true;
+                }
+
+                return false;
+            }
+        }
     }
 
     public override dependencies(): Array<Extension> {
@@ -63,53 +109,40 @@ Record<"wikilink", unknown>
         ]
     }
 
-    proseMirrorNodeToUnistNodes(node: Node, convertedChildren: Array<uNode>): WikiLink[] {
-        return [
-            {
-                type: "wikiLink",
-                data: {
-                    alias: node.attrs['title'],
-                    permalink: node.attrs['href'],
-                    exists: false,
-                    hName: "a",
-                    hProperties: {
-                        className: "",
-                        href: node.attrs['href']
-                    },
-                },
+    processConvertedUnistNode(convertedNode: Text, originalMark: Mark): WikiLink {
+        return {
+            type: "wikiLink",
+            data: {
+                alias: convertedNode.value,
+                permalink: originalMark.attrs.href,
             }
-        ]
+        }
     }
 
-    proseMirrorNodeName(): 'wikilink' {
+    proseMirrorMarkName(): 'wikilink' {
         return 'wikilink'
     }
 
-    proseMirrorNodeSpec(): NodeSpec {
+    proseMirrorMarkSpec(): MarkSpec {
         return {
-            group: 'inline',
-            inline: true,
-            atom: true,
-            marks: '',
-            code: true,
-            attrs: { href: {default: null}, title: { default: null }},
+            attrs: { 
+                href: {default: null}, 
+                class: { default: 'inline-link' }
+            },
             parseDOM: [
                 {
                     tag: 'a[href]',
                     getAttrs(dom: HTMLElement): {
                         href: string | null,
-                        title: string | null
                     } {
                         return {
                             href: (dom as HTMLElement).getAttribute("href"),
-                            title: (dom as HTMLElement).getAttribute("title")
                         }
                     },
                 },
             ],
-            toDOM(node: Node): DOMOutputSpec {
-                console.log(node,"!!");
-                return ["a", node.attrs, 0];
+            toDOM(mark: Mark): DOMOutputSpec {
+                return ["a", mark.attrs, 0];
             },
         }
     }
@@ -120,16 +153,18 @@ Record<"wikilink", unknown>
 
     public override unistNodeToProseMirrorNodes(
         node: WikiLink,
-        proseMirrorSchema: Schema<string, string>,
-        convertedChildren: Array<Node>,
+        schema: Schema<string, string>,
     ): Array<Node> {  
-        console.log("NODE: ", node, convertedChildren);  
-        const ret = createProseMirrorNode(this.proseMirrorNodeName(), proseMirrorSchema, [], {
-            href: node.data.permalink,
-            title: node.data.alias
-        })
-        console.log("RET: ", ret);
-        return ret;
+        return [
+            schema.text(
+                node.data.alias,
+                [
+                    schema.marks[this.proseMirrorMarkName()].create({
+                        href: node.data.permalink,
+                    })
+                ]
+            )
+        ]
     }
 
     unifiedInitializationHook(processor: Processor<uNode, uNode, uNode, uNode, string>): Processor<uNode, uNode, uNode, uNode, string> {
