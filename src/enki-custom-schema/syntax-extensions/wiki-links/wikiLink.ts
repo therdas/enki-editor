@@ -1,19 +1,18 @@
 //@ts-ignore
 import { syntax as wikiLinkMicromarkExtension } from "micromark-extension-wiki-link"
-import { fromMarkdown, toMarkdown } from "mdast-util-wiki-link"
 import { Extension, MarkExtension } from "prosemirror-unified"
 import { Node as uNode } from "unist"
 import { Schema, Node, DOMOutputSpec, Mark, MarkSpec } from "prosemirror-model"
 import { Processor } from "unified"
-import { buildUnifiedExtension } from "../BuildExtension"
-import { EditorView, NodeView } from "prosemirror-view"
 import { TextExtension } from "prosemirror-remark"
-import { InputRule, wrappingInputRule } from "prosemirror-inputrules"
+import { InputRule } from "prosemirror-inputrules"
 import { Text } from "mdast"
-import { Command, EditorState, Transaction } from "prosemirror-state"
+import { Command, Transaction } from "prosemirror-state"
+import { wikiLinkPlugin } from "remark-wiki-link"
 
 export interface WikiLink extends uNode {
     type: "wikiLink",
+
     data: {
         alias: string,
         permalink: string,
@@ -32,19 +31,29 @@ export class WikiLinkItemExtension extends MarkExtension<WikiLink> {
                 (state, match, start, end): Transaction => {
                     let alias = '';
                     let url = '';
+
+                    let marks: Mark[] = [];
+                    state.doc.nodesBetween(start, end, (node) => {
+                        marks.push(...node.marks);
+                    })
+
                     if(match[0].indexOf('|') !== -1) {
-                        match[0].split('|')
+                        let t = match[0].split('|')
+                        url = resolve(t.shift()?.slice(2).trim() ?? '');
+                        alias = t.join('').slice(0, -2).trim();
+                        if(alias.length === 0) alias = url
+                        console.log("alias", alias, "url", url, match[0].split('|'))
+                    } else {
+                        alias = match[0].slice(2, -2)
+                        url = resolve(match[0].slice(2, -2))
                     }
-                    return state.tr.replaceWith(start, end, 
-                        state.schema.text(
-                            match[0].slice(2, -2),
-                            [
-                                state.schema.marks[this.proseMirrorMarkName()].create({
-                                    href: resolve(match[0].slice(2, -2)),
-                                })
-                            ]
-                        )
-                    )
+
+                    console.log(`url: ${url}, alias: ${alias}`);
+
+                    return state.tr.insertText(alias, start, end)
+                        .addMark(start, end, proseMirrorSchema.marks[this.proseMirrorMarkName()].create({
+                            href: url,
+                        }))
                 }
             )
         ]
@@ -92,9 +101,9 @@ export class WikiLinkItemExtension extends MarkExtension<WikiLink> {
                     let url = mark.attrs.href;
                     let alias = text;
                     if(alias == url)
-                        dispatch(state.tr.replaceWith(startPos, endPos, state.schema.text(`[[${url}]`)));
+                        dispatch(state.tr.replaceWith(startPos, endPos, proseMirrorSchema.text(`[[${url}]`)));
                     else
-                    dispatch(state.tr.replaceWith(startPos, endPos, state.schema.text(`[[${url} : alias]`)));
+                    dispatch(state.tr.replaceWith(startPos, endPos, proseMirrorSchema.text(`[[${url} : alias]`)));
                     return true;
                 }
 
@@ -125,6 +134,7 @@ export class WikiLinkItemExtension extends MarkExtension<WikiLink> {
 
     proseMirrorMarkSpec(): MarkSpec {
         return {
+            inclusive: false,
             attrs: { 
                 href: {default: null}, 
                 class: { default: 'inline-link' }
@@ -169,12 +179,9 @@ export class WikiLinkItemExtension extends MarkExtension<WikiLink> {
 
     unifiedInitializationHook(processor: Processor<uNode, uNode, uNode, uNode, string>): Processor<uNode, uNode, uNode, uNode, string> {
         return processor.use(
-            buildUnifiedExtension(
-                [wikiLinkMicromarkExtension()],
-                [fromMarkdown()],
-                //@ts-ignore
-                [toMarkdown()],
-            )
+            wikiLinkPlugin, {
+                aliasDivider: '|',
+            }
         )
     }
 }

@@ -1,6 +1,6 @@
 import { EditorView } from "prosemirror-view"
 import { ProseMirrorUnified } from "prosemirror-unified"
-import { eGFMExtension, GFMEditableTasklistExtension } from "./enki-custom-schema/syntax-extensions"
+import { efmExtension, eGFMExtension, GFMEditableTasklistExtension } from "./enki-custom-schema/syntax-extensions"
 import { EditorState} from "prosemirror-state"
 import { dropCursor } from "prosemirror-dropcursor"
 import { gapCursor } from "prosemirror-gapcursor"
@@ -17,292 +17,76 @@ import { HtmlExtension }  from "./enki-custom-schema/syntax-extensions/Html/Html
 import { HtmlEditableView } from "./enki-custom-schema/syntax-extensions/Html/HtmlView"
 import { WikiLinkItemExtension } from "./enki-custom-schema/syntax-extensions/wiki-links/wikiLink"
 import { TaggableExtension } from "./enki-custom-schema/syntax-extensions/Taggable/taggable"
-import autocomplete, { Options as PMAOptions } from 'prosemirror-autocomplete'
-import { reducer } from "./reducers"
+import autocomplete from 'prosemirror-autocomplete'
+import { SuggestionsManager } from "./reducers"
+import {AutocompleteAction, Options as ACO} from "prosemirror-autocomplete"
+import { TextDirectiveExtension, TextDirectiveView } from "./enki-custom-schema/syntax-extensions/Directive/TextDirectiveExtension"
+import { ContainerDirectiveExtension, ContainerDirectiveView } from "./enki-custom-schema/syntax-extensions/Directive/ContainerDirectiveExtension"
+import { LeafDirectiveExtension, LeafDirectiveView, registerLeafDirective } from "./enki-custom-schema/syntax-extensions/Directive/LeafDirectiveExtension"
+import { DragHandle } from "./enki-custom-schema/plugins/DragHandle"
 
-const autocompleteOpts: PMAOptions = {
-  triggers: [
-    { name: 'hashtag', trigger: '#' },
-    { name: 'mention', trigger: '@' },
-    { name: 'dropdown', trigger: '/' },
-  ],
-  reducer,
+const autocompleteOpts = {
+    triggers: [
+        { name: 'hashtag', trigger: '#' },
+        { name: 'mention', trigger: '@' },
+        { name: 'dropdown', trigger: '/' },
+    ],
+    reducer: (arg: AutocompleteAction): boolean => false,
 }
 
 class EnkiEditor {
-  public view;
-  private pmu = new ProseMirrorUnified([new eGFMExtension, new GFMTableExtension, new HtmlExtension, new GFMEditableTasklistExtension, new WikiLinkItemExtension, new TaggableExtension]);
+    public view;
+    private pmu = new ProseMirrorUnified([new efmExtension, new eGFMExtension, new GFMTableExtension, new HtmlExtension, new GFMEditableTasklistExtension, new WikiLinkItemExtension, new TaggableExtension, new TextDirectiveExtension, new ContainerDirectiveExtension, new LeafDirectiveExtension]);
+    // private pmu = new ProseMirrorUnified([new eGFMExtension, new GFMTableExtension, new HtmlExtension, new GFMEditableTasklistExtension, new WikiLinkItemExtension, new TaggableExtension])
 
-  constructor(target: HTMLElement, content: string) {
-    target.replaceChildren();
-    this.view = new EditorView(target, {
-      state: EditorState.create({
-        doc: this.pmu.parse(content),
-        plugins: [
-          ...autocomplete(autocompleteOpts),
-          dropCursor(), 
-          gapCursor(), 
-          this.pmu.inputRulesPlugin(), 
-          this.pmu.keymapPlugin(), 
-          history(), 
+    constructor(target: HTMLElement, content: string) {
+        const reduc = new SuggestionsManager();
+        autocompleteOpts.reducer = reduc.reducer.bind(reduc);
+        target.replaceChildren();
+        this.view = new EditorView(target, {
+            state: EditorState.create({
+                doc: this.pmu.parse(content),
+                plugins: [
+                ...autocomplete(autocompleteOpts as ACO),
+                    dropCursor(), 
+                    gapCursor(), 
+                    this.pmu.inputRulesPlugin(), 
+                    this.pmu.keymapPlugin(), 
+                    history(), 
 
-          columnResizing({View: TableView}), 
-          tableEditing(),
-          keymap({
-            "Tab": goToNextCell(1),
-            "Shift-Tab": goToNextCell(-1),
-            "Mod-z": undo,
-            "Mod-y": redo, 
-          }),
-          
-        ],
-        schema: this.pmu.schema(),
-      }),
-      nodeViews: {
-        html (node, view, getPos) { return new HtmlEditableView(node, view, getPos) },
-      }
-    })
-  }
-
-  focus() { this.view.focus() }
-  destroy() { this.view.destroy() }
-  
-  getElemId() {
-    return this.view.state.selection.$head;
-  }
-
-  getCurrentBlock(pos: number) {
-    var x = this.view.domAtPos(pos).node;
-    if(x instanceof HTMLElement) {
-      return x.getBoundingClientRect();
-    } else {
-      return x.parentElement!.getBoundingClientRect();
+                    columnResizing({View: TableView}), 
+                    tableEditing(),
+                    keymap({
+                        "Tab": goToNextCell(1),
+                        "Shift-Tab": goToNextCell(-1),
+                        "Mod-z": undo,
+                        "Mod-y": redo, 
+                    }),
+                    DragHandle,
+                ],
+                schema: this.pmu.schema(),
+            }),
+            nodeViews: {
+                html (node, view, getPos) { return new HtmlEditableView(node, view, getPos) },
+                "markdown-block-directive": (node, view, getPos) => new ContainerDirectiveView(node, view, getPos),
+                "markdown-text-directive": (node, view, getPos) => new TextDirectiveView(node, view, getPos),
+                "markdown-leaf-directive": (node, view, getPos) => new LeafDirectiveView(node, view, getPos),
+            }
+        })
     }
-  }
 }
+
+registerLeafDirective('youtube', (node) => {
+        let elem = document.createElement('div');
+
+        let iframe: HTMLIFrameElement = elem.appendChild(document.createElement('iframe'));
+        iframe.src = `https://www.youtube.com/embed/${node.attrs.attrs.url.slice(-11)}`
+
+        return elem;
+})
 
 
 window.onload = () => {
-  let place = document.querySelector("#editor");
-  let view: EnkiEditor = new EnkiEditor(<HTMLElement>place, data);  
-  let dragHandle = new DragHandle(document.getElementById("draghandle")!, view.view);
+    let place = document.querySelector("#editor");
+    let view: EnkiEditor = new EnkiEditor(<HTMLElement>place, data);  
 }
-
-type Position = {
-  top: number,
-  left: number
-}
-
-type NodeDetails = {
-  elem: Node,
-  pos: number
-}
-
-class DragHandle {
-  currentPos: Position = {top: 0, left: 0};
-  private element?: HTMLElement;
-  private view: EditorView;
-  private schema;
-
-  constructor(dragHandle: HTMLElement, view: EditorView) {
-    this.element = dragHandle;
-    this.view = view;
-    this.schema = view.state.schema;
-    this.register();
-  }
-
-  private updateHandlePosition(position: Position) {
-    if(!this.element)
-      return;
-
-    let {top, left} = position;
-
-    this.element.style.top = "" + (top) + "px";
-    this.element.style.left = "" + (left) + "px";
-  }
-
-  private getNodeAtPosition(position: Position): NodeDetails | undefined {
-    let res = this.view.posAtCoords(position);
-    if(!res)
-      return;
-
-    let elem = this.view.nodeDOM(res.inside);
-    if(!elem)
-      return;
-    
-    let r = this.view.state.doc.resolve(res.inside);
-    let node = r.node(r.depth);
-    let parent = r.node(r.depth - 1);
-    
-    /* We want one of the following elements:
-       - A paragraph at depth 0 (that is, a source paragraph)
-       - Any other block-type item that is not a paragraph or text
-       This is to ensure that we do not select, say, the paragraph inside a line-item or a blockquote. We want to select the item itself.
-    */
-
-    // First check if node is a paragraph at level > 0. If not, we should be done
-    // if(node.type == schema.nodes.paragraph && r.depth > 0) {
-    //   console.log("Inside another node's content", node.type.name, r.depth, parent);
-    // } else {
-    // }
-
-
-    return {
-      elem: elem,
-      pos: res?.inside
-    }
-  }
-
-  private moveHandler(event: MouseEvent) {
-    let pos: Position = {
-      left: event.clientX,
-      top: event.clientY
-    }
-
-    let nodeSelected = this.getNodeAtPosition(pos);
-    if(!nodeSelected) return;
-    console.log("Drag ended :(");
-
-
-    //     e.preventDefault();
-    //     e.stopImmediatePropagation();
-    //     e.stopPropagation();
-    //   });
-    // }
-    
-    // function updateDraggerPos(x: number, y: number) {
-    //   let elem = document.getElementById("draghandle");
-    //   if(!elem) return;
-    //   // elem.style.left = ""+ (x - 50)+ "px";
-    //   elem.style.left = ""+ (x - 50) + "px";
-    //   elem.style.top = ""+ (y - 0) + "px";
-    // }
-    
-    let rect = this.view.coordsAtPos(nodeSelected.pos);
-
-    this.updateHandlePosition({left: rect.left, top: rect.top});
-  }
-
-  public register() {
-    let elem = this.view.dom;
-
-    let mhandle = (e: MouseEvent) => { this.moveHandler(e) }
-
-    elem.addEventListener('mousemove', mhandle); 
-
-    console.log("Attached movehandle");
-  }
-
-}
-
-// window.onload = function () {
-//   let place = document.querySelector("#editor");
-//   let view: EnkiEditor = new EnkiEditor(<HTMLElement>place, place?.textContent ?? "");
-
-//   document.addEventListener("mousemove", (e: MouseEvent) => {
-//     // We want to get the position of our cursor, then update that to head. 
-//     let x = e.clientX;
-//     let y = e.clientY;
-
-//     let elem = document.getElementById("draghandle");
-//     if(!elem) return;
-// console.log("OKE");
-// Coords({left: x, top: y});
-
-//     if(pos!.pos == -1 || pos?.inside == -1)
-//         return
-
-//     let rect = view.view.coordsAtPos(pos!.inside);
-
-//     updateDraggerPos(rect.left, rect.top);
-//   })
-
-//   document.querySelector("#draghandle")!.addEventListener("click", (e) => {
-//     view.view.focus()
-//     let x = 800;
-//     let y = (<MouseEvent>e).clientY;
-//     console.log(x, y);
-//     let pos = view.view.posAtCoords({left: x, top:y});
-//     let elem = view.view.state.doc.resolve(pos!.pos);
-//     console.log(elem, elem.node(), pos);
-    
-//     view.view.dispatch(
-//       view.view.state.tr.setSelection(
-//          NodeSelection.create(view.view.state.doc, pos!.inside)
-//       )
-//     );
-
-//   });
-
-//   document.querySelector("#draghandle")!.addEventListener("dragstart", (e) => {
-//     if(!(e instanceof DragEvent))
-//       return;
-
-//     view.focus();
-
-//     if(!e.dataTransfer)KE");
-// Coords({left: x, top: 
-//       return;
-
-//     let x = e.clientX;
-//     let y = e.clientY;
-//     console.log(x, y);
-//     let pos = view.view.posAtCoords({left: x, top:y});
-//     let elem = view.view.state.doc.resolve(pos!.inside);
-//     let node = view.view.nodeDOM(pos!.inside);
-    
-//     view.view.dispatch(
-//       view.view.state.tr.setSelection(
-//         NodeSelection.create(view.view.state.doc, pos!.inside)
-//       )
-//     )
-
-//     const slice = view.view.state.selection.content();
-
-//     //convert Slice to a wrapped div
-//     const { dom, text } = __serializeForClipboard(view.view, slice);
-
-//     e.dataTransfer.clearData();
-//     e.dataTransfer.effectAllowed = "move";
-//     e.dataTransfer.setData("text/html", dom.innerHTML);
-//     e.dataTransfer.setData("text/plain", text);onsole.log("Drag ended :(");
-
-
-//     e.preventDefault();
-//     e.stopImmediatePropagation();
-//     e.stopPropagation();
-//   });
-// }
-
-// function updateDraggerPos(x: number, y: number) {
-//   let elem = document.getElementById("draghandle");
-//   if(!elem) return;
-//   // elem.style.left = ""+ (x - 50)+ "px";
-//   elem.style.left = ""+ (x - 50) + "px";
-//   elem.style.top = ""+ (y - 0) + "px";
-// }
-
-//     e.dataTransfer.setDragImage(<Element>node!, 0, 0);
-
-//     view.view.dragging = {slice, move: true }
-//   });
-
-//   document.querySelector("#draghandle")!.addEventListener("dragend", (e) => {
-//     if(!(e instanceof DragEvent))
-//       return;
-//     console.log("Drag ended :(");
-
-
-//     e.preventDefault();
-//     e.stopImmediatePropagation();
-//     e.stopPropagation();
-//   });
-// }
-
-// function updateDraggerPos(x: number, y: number) {
-//   let elem = document.getElementById("draghandle");
-//   if(!elem) return;
-//   // elem.style.left = ""+ (x - 50)+ "px";
-//   elem.style.left = ""+ (x - 50) + "px";
-//   elem.style.top = ""+ (y - 0) + "px";
-// }

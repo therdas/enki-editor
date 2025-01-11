@@ -32,7 +32,15 @@ what's up #hefegeeyworld
 
 you need to find this at the topic #AI/LLMs
 
-[[what#Section: okay, WHAT]]
+:youtube[Main Video Here]{v=uri}
+
+::youtube[OnePlus 13 Review]{url="https://www.youtube.com/watch?v=-kuG6RgL32c"}
+
+:::spoiler[Open at your own peril]{a=what; b=ok}
+He dies.
+:::
+
+[[what#Section | okay, WHAT]]
 afefe [[Permalink]]
 
 <b>hello woraefegld</b>

@@ -1,15 +1,41 @@
-import { Nodes, PhrasingContent, Text } from "mdast";
-import { findAndReplace, ReplaceFunction } from "mdast-util-find-and-replace";
-
-import { taggableFromMarkdown, taggablePlugin, taggableSyntax, taggableToMarkdown } from 'remark-taggable'
+import { Text } from "mdast";
+import { taggablePlugin } from 'remark-taggable'
 import { Processor } from "unified";
 import { Node as unistNode } from "unist";
-import { buildUnifiedExtension } from "../BuildExtension";
 import { defaultOptions } from "mdast-util-taggable";
 import { InlineTaggableNode } from "mdast-util-taggable";
 import { MarkExtension } from "prosemirror-unified";
 import { Mark, MarkSpec, Schema, Node, DOMOutputSpec } from "prosemirror-model";
+import { InputRule } from "prosemirror-inputrules";
+import { EditorState, Transaction } from "prosemirror-state";
 
+enum Taggable{
+    Tag = 'tag',
+    Mention = 'mention',
+    Invalid = '',
+}
+
+function resolver(str: 'tag' | 'mention' | string): string {
+    if(str == 'tag' || str == 'mention')
+        return str as Taggable;
+    else
+        return '' as Taggable;
+}
+
+function urlResolver(marker: string, val: string) {
+    let type = resolver(typeResolver(marker));
+    switch(type) {
+        case Taggable.Tag: return `/tags/${val}`
+        case Taggable.Mention: return `/user/${val}`
+        case Taggable.Invalid: return `/invalid/${val}`;
+    }
+}
+
+function typeResolver(str: '@' | '#' | string): string {
+    if(str == '@') return Taggable.Tag as string
+    if(str == '#') return Taggable.Mention as string
+    return Taggable.Invalid as string;
+}
 
 const opts = defaultOptions
 
@@ -44,6 +70,7 @@ export class TaggableExtension extends MarkExtension<InlineTaggableNode> {
             }
         }
     }
+    
     processConvertedUnistNode(convertedNode: Text, originalMark: Mark): InlineTaggableNode {
         return {
             type: this.unistNodeName(),
@@ -74,6 +101,5 @@ export class TaggableExtension extends MarkExtension<InlineTaggableNode> {
         console.log("what");
         return processor.use(taggablePlugin, opts)
     }
-
 }
 
