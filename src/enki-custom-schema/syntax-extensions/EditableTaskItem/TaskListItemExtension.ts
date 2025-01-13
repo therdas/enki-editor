@@ -57,7 +57,7 @@ class TaskListItemView implements NodeView {
 
     const checkboxContainer = document.createElement("span");
     checkboxContainer.setAttribute("contenteditable", "false");
-    checkboxContainer.setAttribute("style", "position: absolute; left: 5px;");
+    checkboxContainer.setAttribute("style", "position: zzabsolute; left: 5px;");
     checkboxContainer.appendChild(checkbox);
 
     this.contentDOM = document.createElement("span");

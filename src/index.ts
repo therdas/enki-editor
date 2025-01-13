@@ -25,6 +25,8 @@ import { ContainerDirectiveExtension, ContainerDirectiveView } from "./enki-cust
 import { LeafDirectiveExtension, LeafDirectiveView, registerLeafDirective } from "./enki-custom-schema/syntax-extensions/Directive/LeafDirectiveExtension"
 import { DragHandle } from "./enki-custom-schema/plugins/DragHandle"
 
+import applyDevTools from "prosemirror-dev-tools";
+
 const autocompleteOpts = {
     triggers: [
         { name: 'hashtag', trigger: '#' },
@@ -73,6 +75,8 @@ class EnkiEditor {
                 "markdown-leaf-directive": (node, view, getPos) => new LeafDirectiveView(node, view, getPos),
             }
         })
+
+        // applyDevTools(this.view);
     }
 }
 

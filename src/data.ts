@@ -45,6 +45,8 @@ afefe [[Permalink]]
 
 <b>hello woraefegld</b>
 
+hey <e>man!
+
 [Link!](other-page)
 
 testing <b>markdowner</b> testing
@@ -201,7 +203,7 @@ Ordered lists use numbers followed by periods:
 2.  McHale
 3.  Parish
 
-It's important to note that the actual numbers you use to mark the
+It's **important to note** that *the* actual numbers you use to mark the
 list have no effect on the HTML output Markdown produces. The HTML
 Markdown produces from the above list is:
 

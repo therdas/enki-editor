@@ -7,10 +7,22 @@
         #drag-handle {
             display: block;
             position: fixed;
-            width: 1em;
-            height: 1em;
-            hcontent: "::";
-            background-color: rgb(80, 80, 80);
+            width: 1.4em;
+            height: 1.6em;
+            padding: 0.2em 0.3em;
+            box-sizing: border-box;
+            content: "::";
+            background-color: rgb(90%, 90%, 90%);
+            cursor: grab;
+            border-radius: 4px;
+            box-shadow: 0 2px 2px #00000020;
+            user-select: none;
+        }
+
+        #editor {
+            width: 80vw;
+            margin-left: auto;
+            margin-right: auto;
         }
     </style>
 

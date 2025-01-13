@@ -35,7 +35,10 @@ export class HtmlExtension extends NodeExtension<Html> {
             inline: true,
             atom: true,
             marks: '',
-            code: true
+            code: true,
+            toDOM: (node: ProseMirrorNode) => {
+                return ['code', 0]
+            }
         }
     }
 
