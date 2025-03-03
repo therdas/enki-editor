@@ -3,7 +3,7 @@
 
 import { NodeSelection, Plugin } from "prosemirror-state";
 import { EditorView } from "prosemirror-view";
-import { ResolvedPos } from "prosemirror-model";
+import { ResolvedPos, Slice } from "prosemirror-model";
 import { throttle } from "lodash";
 import { serializeForClipboard } from '../../../node_modules/prosemirror-view/src/clipboard.ts'
 
@@ -30,9 +30,16 @@ export const DragHandle = new Plugin({
         dragger.id ='drag-handle';
         dragger.draggable = true;
         dragger.ondragstart = e => dragStart(view, e);
-        return {
-            update(view, prevState) {
 
+        let inserter: HTMLDivElement = document.body.appendChild(document.createElement('div'));
+        inserter.textContent = '+';
+        inserter.id = 'inserter';
+        inserter.draggable = false;
+        inserter.onclick = e => insertType(view, e);
+
+        return {
+            update() {
+                // There's really no need to update a draggerhandle
             },
             destroy() {
                 if(dragger)
@@ -51,42 +58,61 @@ export const DragHandle = new Plugin({
                 if(!pos$) return;
                 
                 State.pos$ = pos$;
-                console.log("POS SET TO ", pos$);
                 let rect = view.coordsAtPos(pos$.pos - pos$.parentOffset - 1);
 
                 let dragger = document.querySelector('#drag-handle') as HTMLElement;
+                let inserter = document.querySelector('#inserter') as HTMLElement;
 
                 if(!dragger) return;
                 dragger.style.top = rect.top + 'px';
                 dragger.style.left = (rect.left - 40) + 'px';
+
+                if(inserter !== null) {
+                    inserter.style.top = rect.top + 'px';
+                    inserter.style.left = (rect.left - 40) + 'px';
+                }
             }, 100)
         }
     }
 })
 
+function insertType(view: EditorView, event: MouseEvent) {
+
+}
+
 function dragStart(view: EditorView, event: DragEvent) {
-    console.log("Look maa im draggin", State.pos$)
     if(!event.dataTransfer || !State.pos$)
         return;
 
-    let pos$ = State.pos$;
+    let pos$: ResolvedPos;
+    let slice: Slice;
 
-    if(pos$ !== null) {
-        view.dispatch(view.state.tr.setSelection(NodeSelection.create(view.state.doc, pos$.pos - 1 - pos$.parentOffset)))
-        console.log(view.state.selection.content())
-        let slice = view.state.selection.content()
+    // Do this if the user selects multiple things
+    if(view.state.selection.head !== view.state.selection.anchor) {
+        slice = view.state.selection.content();
+    } else {
+        pos$ = State.pos$;
+        if(pos$ !== null) {
+            view.dispatch(view.state.tr.setSelection(NodeSelection.create(view.state.doc, pos$.pos - 1 - pos$.parentOffset)))
+        } else return;
+        slice = view.state.selection.content();
+    }   
+    
+    // @ts-expect-error View (global) is pulling from .d.ts file, the function below does so via the .ts file,
+    // hence the mismatch 
+    let {dom, text} = serializeForClipboard(view, slice)
 
-        // @ts-expect-error View (global) is pulling from .d.ts file, the function below does so via the .ts file,
-        // hence the mismatch 
-        let {dom, text} = serializeForClipboard(view, slice)
+    document.body.appendChild(dom);
 
-        event.dataTransfer.clearData()
-        event.dataTransfer.setData('text/html', dom.innerHTML)
-        event.dataTransfer.setData('text/plain', text)
+    event.dataTransfer.clearData()
+    event.dataTransfer.setData('text/html', dom.innerHTML)
+    event.dataTransfer.setData('text/plain', text)
+    event.dataTransfer.setDragImage(dom, -40, -40);
 
-        view.dragging = { slice, move: true }
-        view.focus()
-    }
+    view.dragging = { slice, move: true }
+    view.focus()
+        
+
 }
 
 function getLegalPosAtCoords(coords: {left: number, top: number}, view: EditorView): ResolvedPos | null {

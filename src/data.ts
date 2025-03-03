@@ -1,4 +1,6 @@
-export const data = `# Markdown: Syntax
+export const data = `::what[is *going* on]{val=key}
+
+# Markdown: Syntax
 
 *   [Overview](#overview)
     *   [Philosophy](#philosophy)
@@ -22,7 +24,7 @@ export const data = `# Markdown: Syntax
 
 
 **Note:** This document is itself written using Markdown; you
-can [see the source for it by adding '.text' to the URL](/projects/markdown/syntax.text).
+can [see the **source** for it by adding '.text' to the URL](/projects/markdown/syntax.text).
 
 @timothy are ya there
 
@@ -34,7 +36,7 @@ you need to find this at the topic #AI/LLMs
 
 :youtube[Main Video Here]{v=uri}
 
-::youtube[OnePlus 13 Review]{url="https://www.youtube.com/watch?v=-kuG6RgL32c"}
+::youtube[OnePlus 13 Review]{url="https://www.youtube.com/embed/-kuG6RgL32c"}
 
 :::spoiler[Open at your own peril]{a=what; b=ok}
 He dies.

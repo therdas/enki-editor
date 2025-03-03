@@ -7,29 +7,40 @@ import remarkDirective from "remark-directive";
 import { PhrasingContent } from "mdast";
 import { EditorView, NodeView } from "prosemirror-view";
 
-export const TextDirectiveMap = new Map<string, (arg: PMNode) => HTMLSpanElement>();
-
 export class TextDirectiveView implements NodeView {
     dom: HTMLElement;
     contentDOM?: HTMLElement | null | undefined;
     pluginDOM?: HTMLElement | undefined;
     header?: HTMLElement;
+    static fragmentHandlers = new Map<string, (arg: Record<string, string>) => [HTMLElement, HTMLElement, HTMLElement]>();
 
     constructor(public node: PMNode, public outerView: EditorView, public getPos: () => number | undefined) {
-        this.dom = document.createElement('span');
-        this.dom.classList.add('md-text-directive', 'plugin');
-
-        this.pluginDOM = TextDirectiveMap.get(node.attrs.name)?.call(null, node) ?? this.createFallback(node);
+        let res = TextDirectiveView.fragmentHandlers.get(node.attrs.name)?.call(null, {name: node.attrs.name, type: node.attrs.type, ...node.attrs.attrs}) ?? this.createFallback(node);
+        
+        this.dom = res[0];
+        this.dom.classList.add('md-directive-container', 'plugin');
+        
+        this.pluginDOM = res[1];
         this.dom.appendChild(this.pluginDOM);
-        this.contentDOM = this.dom.appendChild(document.createElement("span"));
+
+        this.contentDOM = res[2];
+        this.dom.appendChild(this.contentDOM);
     }
 
     createFallback(node: PMNode) {
         let res = document.createElement('span');
         let mesg = res.appendChild(document.createElement('span'));
-        mesg.textContent = `This view is not handled properly, maybe a plugin is missing?\nType: ${node.attrs.type}, \nValue: ${node.attrs.value}`;
+        mesg.textContent = `This view is not handled properly, maybe a plugin is missing?\nType: ${node.attrs.type}, \nAttributes: ${JSON.stringify(node.attrs.attrs)}`;
         mesg.contentEditable = 'false'
-        return res;
+        return [document.createElement('div'), res, document.createElement('div')];
+    }
+
+    static addFragmentHandlers(name: string, func: (arg: Record<string, string>) => [HTMLElement, HTMLElement, HTMLElement]) {
+        TextDirectiveView.fragmentHandlers.set(name, func);
+    }
+
+    static clearFragmentHandlers() {
+        TextDirectiveView.fragmentHandlers.clear();
     }
 }
 
@@ -52,7 +63,23 @@ export class TextDirectiveExtension extends NodeExtension
             content: "inline*",
             group: "inline",
             inline: true,
-            marks: "",
+            marks: "",toDOM: (node: PMNode) => [ "fragment", { 
+                "data-name": node.attrs.name,
+                "data-type": node.attrs.type,
+                "data-attrs": node.attrs.attrs,
+            }, 0],
+            parseDOM: [
+                {
+                    getAttrs(dom) {
+                        return {
+                            "data-name": dom.getAttribute("data-name"),
+                            "data-type": dom.getAttribute("data-type"),
+                            "data-attrs": dom.getAttribute("data-attrs"),
+                        }
+                    },
+                    tag: "fragment"
+                }, 
+            ]
         }
     }
     proseMirrorNodeToUnistNodes(node: PMNode, convertedChildren: Array<UnistNode>): TextDirective[] {

@@ -11,7 +11,6 @@ export class ItalicExtension extends PMUItalicExtension {
             new InputRule(
                 /(?<!\*)\*([^\s\*](?:[^\*]*[^\s\*])?)\*[^\*]$/u,
                 (state, match, start, end) => {
-                    console.log(match, state.doc.textBetween(start, end), state.doc.textBetween(start, end+10));
                     return state.tr.addMark(start, end-1, proseMirrorSchema.marks[this.proseMirrorMarkName()].create())
                         .deleteRange(end-1, end)
                         .deleteRange(start, start + 1)
@@ -22,7 +21,6 @@ export class ItalicExtension extends PMUItalicExtension {
             new InputRule(
                 /(?<!_)_([^\s_](?:[^_]*[^\s_])?)_[^_]$/u,
                 (state, match, start, end) => {
-                    console.log(match, state.doc.textBetween(start, end), state.doc.textBetween(start, end+10));
                     return state.tr.addMark(start, end-1, proseMirrorSchema.marks[this.proseMirrorMarkName()].create())
                         .deleteRange(end-1, end)
                         .deleteRange(start, start + 1)

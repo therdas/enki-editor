@@ -1,12 +1,12 @@
 
 import type { BlockContent, DefinitionContent, ListItem } from "mdast";
-import type {
-  DOMOutputSpec,
-  NodeSpec,
-  Node as ProseMirrorNode,
-  Schema,
+import {
+  type DOMOutputSpec,
+  type NodeSpec,
+  type Node as ProseMirrorNode,
+  type Schema,
 } from "prosemirror-model";
-import type { Command, EditorState } from "prosemirror-state";
+import { NodeSelection, TextSelection, type Command } from "prosemirror-state";
 import type {
   EditorView,
   NodeView,
@@ -25,7 +25,14 @@ import { createProseMirrorNode, NodeExtension } from "prosemirror-unified";
 
 import { buildUnifiedExtension } from "../BuildExtension";
 
-class TaskListItemView implements NodeView {
+import {
+  liftListItem,
+  sinkListItem,
+  splitListItem,
+} from "prosemirror-schema-list";
+import { ReplaceAroundStep } from "prosemirror-transform";
+
+export class TaskListItemView implements NodeView {
   public readonly contentDOM: HTMLElement;
   public readonly dom: HTMLElement;
 
@@ -57,16 +64,16 @@ class TaskListItemView implements NodeView {
 
     const checkboxContainer = document.createElement("span");
     checkboxContainer.setAttribute("contenteditable", "false");
-    checkboxContainer.setAttribute("style", "position: zzabsolute; left: 5px;");
+    checkboxContainer.setAttribute("style", "display: block; position: absolute; left: 0 px");
     checkboxContainer.appendChild(checkbox);
 
-    this.contentDOM = document.createElement("span");
-    this.contentDOM.setAttribute("style", "position: relative; left: 30px;");
+    this.contentDOM = document.createElement("p");
+    this.contentDOM.setAttribute("style", "position: relative; left: 30px; ");
 
     this.dom = document.createElement("li");
     this.dom.setAttribute(
       "style",
-      "list-style-type: none; margin-left: -30px;",
+      "position: relative;display: block; margin-left: -30px;",
     );
     this.dom.appendChild(checkboxContainer);
     this.dom.appendChild(this.contentDOM);
@@ -82,19 +89,6 @@ class TaskListItemView implements NodeView {
  * @public
  */
 export class TaskListItemExtension extends NodeExtension<ListItem> {
-  private static isAtStart(
-    state: EditorState,
-    view: EditorView | undefined,
-  ): boolean {
-    if (!state.selection.empty) {
-      return false;
-    }
-    if (view !== undefined) {
-      return view.endOfTextblock("backward", state);
-    }
-    return state.selection.$anchor.parentOffset > 0;
-  }
-
   public override proseMirrorInputRules(
     proseMirrorSchema: Schema<string, string>,
   ): Array<InputRule> {
@@ -104,14 +98,18 @@ export class TaskListItemExtension extends NodeExtension<ListItem> {
         if (wrappingNode.type.name !== "regular_list_item") {
           return null;
         }
-        return state.tr.replaceRangeWith(
+
+        let transaction = state.tr;
+        transaction.replaceRangeWith(
           start - 2,
           start + wrappingNode.nodeSize,
           proseMirrorSchema.nodes[this.proseMirrorNodeName()].create(
             { checked: match[1] === "x" },
-            wrappingNode.content.cut(3 + match[1].length),
-          ),
-        );
+            wrappingNode.content.cut(3 + match[1].length)
+          )
+        )
+        transaction.setSelection(new TextSelection(transaction.doc.resolve(start)))
+        return transaction;
       }),
     ];
   }
@@ -119,30 +117,11 @@ export class TaskListItemExtension extends NodeExtension<ListItem> {
   public override proseMirrorKeymap(
     proseMirrorSchema: Schema<string, string>,
   ): Record<string, Command> {
+    const nodeType = proseMirrorSchema.nodes[this.proseMirrorNodeName()];
     return {
-      Backspace: (state, dispatch, view): boolean => {
-        if (!TaskListItemExtension.isAtStart(state, view)) {
-          return false;
-        }
-        const taskListItemNode = state.selection.$anchor.node(-1);
-        if (taskListItemNode.type.name !== "task_list_item") {
-          return false;
-        }
-        if (dispatch === undefined) {
-          return true;
-        }
-        dispatch(
-          state.tr.replaceRangeWith(
-            state.selection.$from.before() - 2,
-            state.selection.$from.before() + taskListItemNode.nodeSize,
-            proseMirrorSchema.nodes["regular_list_item"].create(
-              {},
-              taskListItemNode.content,
-            ),
-          ),
-        );
-        return true;
-      },
+      Enter: splitListItem(nodeType),
+      "Shift-Tab": liftListItem(nodeType),
+      Tab: sinkListItem(nodeType),
     };
   }
 
@@ -168,27 +147,11 @@ export class TaskListItemExtension extends NodeExtension<ListItem> {
           tag: "li",
         },
       ],
-      toDOM(node: ProseMirrorNode): DOMOutputSpec {
+      toDOM(_: ProseMirrorNode): DOMOutputSpec {
         return [
           "li",
-          { style: "list-style-type: none;, margin-left: -30px;" },
-          [
-            "span",
-            {
-              contenteditable: "false",
-              style: "position: absolute; left: 5px;",
-            },
-            [
-              "input",
-              {
-                checked: (node.attrs["checked"] as boolean)
-                  ? "checked"
-                  : undefined,
-                type: "checkbox",
-              },
-            ],
-          ],
-          ["span", { style: "position: relative; left: 30px" }, 0],
+          { style: "list-style-type: circle;" },            
+          ["span", { class: 'en-gfm-tasklist-item' }, 0],
         ];
       },
     };

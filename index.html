@@ -4,7 +4,7 @@
     <title>MyPage</title>
     <script type="module" src="./src/index.ts"></script>
     <style>
-        #drag-handle {
+        #drag-handle , #inserter{
             display: block;
             position: fixed;
             width: 1.4em;
@@ -17,6 +17,11 @@
             border-radius: 4px;
             box-shadow: 0 2px 2px #00000020;
             user-select: none;
+        }
+
+        #inserter {
+            cursor: default;
+            transform: translateX(-30px);
         }
 
         #editor {

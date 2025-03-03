@@ -20,7 +20,6 @@ export function addRowAfterLast (state: EditorState, dispatch?: (tr: Transaction
     let rect = selectedRect(state);
     let table = rect.map;
     
-    console.log("Rct", rect.top, table.height, dispatch, view);
 
     // Make new row if it is the last row
     if((rect.top + 1 == table.height) && dispatch && view)
@@ -35,7 +34,6 @@ export function moveToNextRow(state: EditorState, dispatch?: (tr: Transaction) =
 
     let rect = selectedRect(state);
 
-    console.log(rect.top,rect.left, rect.map.height, rect.map.width);
 
     let row = rect.top;
     let col = rect.left;
@@ -44,14 +42,12 @@ export function moveToNextRow(state: EditorState, dispatch?: (tr: Transaction) =
     if(row >= map.height - 1 || col >= map.width - 1)
         return false;
 
-    console.log("OKE");
     const selStart = map.positionAt(row + 1, col, rect.table) + rect.tableStart + 1; // +1 because we want to point _inside_ the cell.
     const $selStart = view?.state.doc.resolve(selStart);
     const $selEnd = view?.state.doc.resolve(($selStart?.pos ?? 0) + ($selStart?.nodeAfter?.nodeSize ?? 0))
 
     if(!$selStart) return false;
 
-    console.log("OKEOKE");
 
     if(dispatch) dispatch( state.tr.setSelection( new TextSelection( $selStart, $selEnd ) ).scrollIntoView() )
 
@@ -136,7 +132,6 @@ Record<"table_cell", unknown>
     ): Array<ProseMirrorNode> {
         // // If the fragment has only text node(s) - this needs to be fixed. One solution is to naively wrap entire fragment in paragraph blocks. This is what we'll do here
         // let container = schema.nodes["paragraph"].createAndFill(null, convertedChildren);
-        // console.log("CONTAINED IN", container);
         const res = createProseMirrorNode(
             this.proseMirrorNodeName(),
             schema,

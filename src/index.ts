@@ -20,30 +20,35 @@ import { TaggableExtension } from "./enki-custom-schema/syntax-extensions/Taggab
 import autocomplete from 'prosemirror-autocomplete'
 import { SuggestionsManager } from "./reducers"
 import {AutocompleteAction, Options as ACO} from "prosemirror-autocomplete"
-import { TextDirectiveExtension, TextDirectiveView } from "./enki-custom-schema/syntax-extensions/Directive/TextDirectiveExtension"
-import { ContainerDirectiveExtension, ContainerDirectiveView } from "./enki-custom-schema/syntax-extensions/Directive/ContainerDirectiveExtension"
-import { LeafDirectiveExtension, LeafDirectiveView, registerLeafDirective } from "./enki-custom-schema/syntax-extensions/Directive/LeafDirectiveExtension"
+import { TextDirectiveExtension, TextDirectiveView, ContainerDirectiveExtension, ContainerDirectiveView, LeafDirectiveExtension, LeafDirectiveView, setFragmentHandler } from './enki-custom-schema/syntax-extensions/directive'
 import { DragHandle } from "./enki-custom-schema/plugins/DragHandle"
+import { Schema } from "prosemirror-model"
 
-import applyDevTools from "prosemirror-dev-tools";
 
 const autocompleteOpts = {
     triggers: [
         { name: 'hashtag', trigger: '#' },
         { name: 'mention', trigger: '@' },
-        { name: 'dropdown', trigger: '/' },
+        { name: 'inserter', trigger: '/' },
     ],
     reducer: (arg: AutocompleteAction): boolean => false,
 }
 
+function buildTypeInfo(schema: Schema) {
+    for(let scheme in schema.nodes) {
+        console.log(`${scheme}: ${schema.nodes[scheme]}`)
+    }
+}
+
 class EnkiEditor {
     public view;
+    // private pmu = new ProseMirrorUnified([new MarkdownExtension, new HtmlExtension]);
     private pmu = new ProseMirrorUnified([new efmExtension, new eGFMExtension, new GFMTableExtension, new HtmlExtension, new GFMEditableTasklistExtension, new WikiLinkItemExtension, new TaggableExtension, new TextDirectiveExtension, new ContainerDirectiveExtension, new LeafDirectiveExtension]);
-    // private pmu = new ProseMirrorUnified([new eGFMExtension, new GFMTableExtension, new HtmlExtension, new GFMEditableTasklistExtension, new WikiLinkItemExtension, new TaggableExtension])
 
     constructor(target: HTMLElement, content: string) {
         const reduc = new SuggestionsManager();
         autocompleteOpts.reducer = reduc.reducer.bind(reduc);
+        buildTypeInfo(this.pmu.schema())
         target.replaceChildren();
         this.view = new EditorView(target, {
             state: EditorState.create({
@@ -73,6 +78,7 @@ class EnkiEditor {
                 "markdown-block-directive": (node, view, getPos) => new ContainerDirectiveView(node, view, getPos),
                 "markdown-text-directive": (node, view, getPos) => new TextDirectiveView(node, view, getPos),
                 "markdown-leaf-directive": (node, view, getPos) => new LeafDirectiveView(node, view, getPos),
+                ...this.pmu.nodeViews(),
             }
         })
 
@@ -80,15 +86,27 @@ class EnkiEditor {
     }
 }
 
-registerLeafDirective('youtube', (node) => {
-        let elem = document.createElement('div');
+setFragmentHandler({
+    leaf: [
+        {
+            name: 'youtube',
+            func: (args) => {
+                const url = args.url;
+                const elem = document.createElement('iframe');
+                
+                elem.width = "500";
+                elem.height = "350";
+                elem.title = "YouTube Video Player";
+                elem.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
+                elem.referrerPolicy = "strict-origin-when-cross-origin";
+                elem.allowFullscreen = true;
+                elem.src = url;
 
-        let iframe: HTMLIFrameElement = elem.appendChild(document.createElement('iframe'));
-        iframe.src = `https://www.youtube.com/embed/${node.attrs.attrs.url.slice(-11)}`
-
-        return elem;
+                return [document.createElement('span') as HTMLElement, elem as HTMLElement, document.createElement('span') as HTMLElement];
+            }
+        }
+    ]
 })
-
 
 window.onload = () => {
     let place = document.querySelector("#editor");

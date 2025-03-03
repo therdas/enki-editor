@@ -98,7 +98,6 @@ export class TaggableExtension extends MarkExtension<InlineTaggableNode> {
 
     public override unifiedInitializationHook(processor: Processor<unistNode, unistNode, unistNode, unistNode, string>): 
     Processor<unistNode, unistNode, unistNode, unistNode, string> {
-        console.log("what");
         return processor.use(taggablePlugin, opts)
     }
 }

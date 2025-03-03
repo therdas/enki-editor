@@ -10,7 +10,6 @@ export class BoldExtension extends PMUBoldExtension {
             new InputRule(
                 /\*\*([^\s](?:.*[^\s])?)\*\*([\s\S])$/u,
                 (state, match, start, end) => {
-                    console.log(match, state.doc.textBetween(start, end), state.doc.textBetween(start, end+10));
                     return state.tr.addMark(start, end-1, proseMirrorSchema.marks[this.proseMirrorMarkName()].create())
                         .deleteRange(end-2, end)
                         .deleteRange(start, start + 2)
@@ -21,7 +20,6 @@ export class BoldExtension extends PMUBoldExtension {
             new InputRule(
                 /__([^\s](?:.*[^\s])?)__([\s\S])$/u,
                 (state, match, start, end) => {
-                    console.log(match, state.doc.textBetween(start, end), state.doc.textBetween(start, end+10));
                     return state.tr.addMark(start, end-1, proseMirrorSchema.marks[this.proseMirrorMarkName()].create())
                         .deleteRange(end-2, end)
                         .deleteRange(start, start + 2)

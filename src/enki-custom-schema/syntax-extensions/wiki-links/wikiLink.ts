@@ -42,13 +42,10 @@ export class WikiLinkItemExtension extends MarkExtension<WikiLink> {
                         url = resolve(t.shift()?.slice(2).trim() ?? '');
                         alias = t.join('').slice(0, -2).trim();
                         if(alias.length === 0) alias = url
-                        console.log("alias", alias, "url", url, match[0].split('|'))
                     } else {
                         alias = match[0].slice(2, -2)
                         url = resolve(match[0].slice(2, -2))
                     }
-
-                    console.log(`url: ${url}, alias: ${alias}`);
 
                     return state.tr.insertText(alias, start, end)
                         .addMark(start, end, proseMirrorSchema.marks[this.proseMirrorMarkName()].create({
