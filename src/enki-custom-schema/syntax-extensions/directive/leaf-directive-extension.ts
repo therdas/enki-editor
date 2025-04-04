@@ -1,11 +1,13 @@
 import { Node as UnistNode } from "unist";
-import { NodeSpec, Node as PMNode, Schema } from "prosemirror-model";
+import { Fragment, NodeSpec, Node as PMNode, Schema } from "prosemirror-model";
 import { NodeExtension } from "prosemirror-unified";
 import { LeafDirective } from "mdast-util-directive"
 import { Processor } from "unified";
-import remarkDirective from "remark-directive"; 
+import remarkDirective from "remark-directive";
 import { PhrasingContent } from "mdast";
 import { EditorView, NodeView } from "prosemirror-view";
+import { Command, NodeSelection } from "prosemirror-state";
+import { selectDocEnd } from "@codemirror/commands";
 
 export class LeafDirectiveView implements NodeView {
     dom: HTMLElement;
@@ -13,13 +15,13 @@ export class LeafDirectiveView implements NodeView {
     pluginDOM?: HTMLElement | undefined;
     header?: HTMLElement;
     static fragmentHandlers = new Map<string, (arg: Record<string, string>) => [HTMLElement, HTMLElement, HTMLElement]>();
- 
+
     constructor(public node: PMNode, public outerView: EditorView, public getPos: () => number | undefined) {
-        let res = LeafDirectiveView.fragmentHandlers.get(node.attrs.name)?.call(null, {name: node.attrs.name, type: node.attrs.type, ...node.attrs.attrs}) ?? this.createFallback(node);
-        
+        let res = LeafDirectiveView.fragmentHandlers.get(node.attrs.name)?.call(null, { name: node.attrs.name, type: node.attrs.type, ...node.attrs.attrs }) ?? this.createFallback(node);
+
         this.dom = res[0];
         this.dom.classList.add('md-directive-container', 'plugin');
-        
+
         this.pluginDOM = res[1];
         this.dom.appendChild(this.pluginDOM);
 
@@ -44,8 +46,8 @@ export class LeafDirectiveView implements NodeView {
     }
 }
 
-export class LeafDirectiveExtension extends NodeExtension 
-<LeafDirective> {
+export class LeafDirectiveExtension extends NodeExtension
+    <LeafDirective> {
     proseMirrorNodeName(): 'markdown-leaf-directive' {
         return 'markdown-leaf-directive';
     }
@@ -63,8 +65,7 @@ export class LeafDirectiveExtension extends NodeExtension
             content: "inline*",
             group: "block",
             inline: false,
-            marks: "",
-            toDOM: (node: PMNode) => [ "fragment", { 
+            toDOM: (node: PMNode) => ["fragment", {
                 "data-name": node.attrs.name,
                 "data-type": node.attrs.type,
                 "data-attrs": node.attrs.attrs,
@@ -79,7 +80,7 @@ export class LeafDirectiveExtension extends NodeExtension
                         }
                     },
                     tag: "fragment"
-                }, 
+                },
             ]
         }
     }
@@ -93,14 +94,14 @@ export class LeafDirectiveExtension extends NodeExtension
             }
         ]
     }
-    
+
     unistNodeToProseMirrorNodes(node: LeafDirective, schema: Schema<string, string>, convertedChildren: Array<PMNode>, context: Partial<Record<string, never>>): Array<PMNode> {
         let res = schema.nodes[this.proseMirrorNodeName()].createAndFill(
             {
                 name: node.name,
                 type: node.type,
-                attrs: node.attributes, 
-            }, 
+                attrs: node.attributes,
+            },
             convertedChildren
         )
         return res ? [res] : [];

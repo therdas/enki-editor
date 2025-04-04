@@ -1,4 +1,9 @@
-export const data = `::what[is *going* on]{val=key}
+export const data = `eyyo 
+hi <boy>no</boy> oea
+
+<h1>WHAT</h1>
+
+ok then
 
 # Markdown: Syntax
 

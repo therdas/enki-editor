@@ -63,7 +63,7 @@ export class TextDirectiveExtension extends NodeExtension
             content: "inline*",
             group: "inline",
             inline: true,
-            marks: "",toDOM: (node: PMNode) => [ "fragment", { 
+            toDOM: (node: PMNode) => [ "fragment", { 
                 "data-name": node.attrs.name,
                 "data-type": node.attrs.type,
                 "data-attrs": node.attrs.attrs,

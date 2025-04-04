@@ -2,7 +2,6 @@ import { Extension } from "prosemirror-unified";
 import { TableCellExtension } from "./Table/TableCell.ts";
 import { TableRowExtension } from "./Table/TableRow.ts";
 import { TableExtension } from "./Table/Table.ts";
-import { HtmlExtension } from "./Html/HtmlExtension.ts";
 import { BlockquoteExtension, BreakExtension, CodeBlockExtension, DefinitionExtension, ExtendedAutolinkExtension, HeadingExtension, HorizontalRuleExtension, ImageExtension, ImageReferenceExtension, InlineCodeExtension, LinkExtension, LinkReferenceExtension, ListItemExtension, MarkdownExtension, OrderedListExtension, ParagraphExtension, RootExtension, StrikethroughExtension, TextExtension, UnorderedListExtension } from "prosemirror-remark";
 import { TaskListItemExtension } from "./EditableTaskItem/TaskListItemExtension.ts";
 import { ItalicExtension } from "./italbold/ItalicsExtension.ts";
@@ -17,8 +16,6 @@ export {
     TableRowExtension,
 }
 
-export { HtmlExtension as HtmlInlayExtension }
-
 export class GFMTableExtension extends Extension {
     public override dependencies(): Array<Extension> {
         return [
@@ -26,15 +23,6 @@ export class GFMTableExtension extends Extension {
             new TableRowExtension(),
             new TableCellExtension(),
         ];
-    }
-}
-
-export class MDHtmlInlayExtension extends Extension {
-    public override dependencies(): Array<Extension> {
-        return [
-            new HtmlExtension(),
-
-        ]
     }
 }
 

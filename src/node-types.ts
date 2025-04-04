@@ -1,49 +1,71 @@
+import { isTypedArray } from "lodash";
 import { Node as PMNode, Schema } from "prosemirror-model";
-import { EditorView } from "prosemirror-view";
+
+/*
+    We could have relied on the default create behaviour of node by passing the names, but some nodes need special
+    care. For example, take tables. In this case, we define custom behaviour by defining custom names.
+*/
 
 export function nodeTypes(): [string, string, string][] {
     return [
         // Format:
         // Display Name, type, markdown shorthand
-        ['paragraph', 'paragraph', '↵↵'],
-        ['blockquote', 'blockquote', '>'],
-        ['code block', 'code_block', '```'],
-        ['heading 1', 'heading_1', '#'],
-        ['heading 2', 'heading_2', '##'],
-        ['heading 3', 'heading_3', '###'],
-        ['table', 'table', '|---|'],
-        ['to-do', 'task_list_item', '- []'],
+        ['Paragraph', '↵↵', 'paragraph'],
+        ['Blockquote', '>', 'blockquote'],
+        ['Code', '```', 'code_block'],
+        ['Heading 1', '#', 'heading1'],
+        ['Heading 2', '##', 'heading2'],
+        ['Heading 3', '###', 'heading3'],
+        ['Heading 4', '####', 'heading4'],
+        ['Heading 5', '#####', 'heading5'],
+        ['Heading 6', '######', 'heading6'],
+        ['Table', '|---|', 'table'],
+        ['To Do', '- []', 'task_list_item'],
+        ['Bulleted List', '- ', 'ulist'],
+        ['Numbered List', '1. ', 'olist'],
+        ['Raw HTML', '', 'html'],
     ]
 }
 
+function rationalizeName(name: string): string {
+    return ["", ...name.split('_').flatMap(val => val.split('-'))].reduce((prev, cur) =>  prev + " " + cur.slice(0,1).toUpperCase() + cur.slice(1) );
+}
+
+export function makeNodes(schema: Schema): [string, string, string][] {
+    let types: [string, string, string][] = [];
+
+    for(let type in schema.nodes) {
+        console.log("Registering ", type);
+    }
+
+    return types;
+}
+
 export function makeNode(type: string, schema: Schema): [PMNode, number, number] | undefined {
-    try {
-        if (type == 'task_list_item') {
-            const node_type = schema.nodes[type];
-            return [
-                node_type.create(
-                    { checked: false },
-                    schema.nodes['paragraph'].create(
-                        null,
-                        schema.text("To-do")
-                    )
-                ),
-                1, 5
-            ]
-        } else if (type.slice(0, -2) === 'heading') {
+
+    const node_type = schema.nodes[type];
+    if(!node_type) {
+        if (type.slice(0, -1) === 'heading') {
             console.log("Got heading?")
             const heading_level = Number.parseInt(type.slice(-1));
-            const node_type = schema.nodes[type.slice(0, -2)];
+            const node_type = schema.nodes[type.slice(0, -1)];
             return [
                 node_type.create(
                     { level: heading_level },
-                    schema.text('Heading')
+                    schema.text(' ')
                 ),
                 0,0
             ]
+        } else {
+            console.log("Undefined node?", type)
         }
-    } catch (err) {
-        console.error("Caught error", err, "while trying to create element from dropdown")
-        return;
+    } else {
+        return [
+            node_type.create(
+                null,
+                schema.text(' ')
+            ),
+            0, 0
+        ]
     }
 }

@@ -1,7 +1,7 @@
 import { EditorView } from "prosemirror-view"
 import { ProseMirrorUnified } from "prosemirror-unified"
 import { efmExtension, eGFMExtension, GFMEditableTasklistExtension } from "./enki-custom-schema/syntax-extensions"
-import { EditorState} from "prosemirror-state"
+import { EditorState, Selection, Transaction } from "prosemirror-state"
 import { dropCursor } from "prosemirror-dropcursor"
 import { gapCursor } from "prosemirror-gapcursor"
 import { history, redo, undo } from "prosemirror-history"
@@ -9,20 +9,20 @@ import { GFMTableExtension } from "./enki-custom-schema/syntax-extensions"
 import { tableEditing, columnResizing, goToNextCell } from "prosemirror-tables"
 import { keymap } from "prosemirror-keymap"
 import { TableView } from "./enki-custom-schema/syntax-extensions/Table/TableView"
-
+import { Command } from "prosemirror-state"
 import { data } from "./data"
 
 import "../style.sass"
-import { HtmlExtension }  from "./enki-custom-schema/syntax-extensions/Html/HtmlExtension"
-import { HtmlEditableView } from "./enki-custom-schema/syntax-extensions/Html/HtmlView"
 import { WikiLinkItemExtension } from "./enki-custom-schema/syntax-extensions/wiki-links/wikiLink"
 import { TaggableExtension } from "./enki-custom-schema/syntax-extensions/Taggable/taggable"
 import autocomplete from 'prosemirror-autocomplete'
 import { SuggestionsManager } from "./reducers"
-import {AutocompleteAction, Options as ACO} from "prosemirror-autocomplete"
+import { AutocompleteAction, Options as ACO } from "prosemirror-autocomplete"
 import { TextDirectiveExtension, TextDirectiveView, ContainerDirectiveExtension, ContainerDirectiveView, LeafDirectiveExtension, LeafDirectiveView, setFragmentHandler } from './enki-custom-schema/syntax-extensions/directive'
 import { DragHandle } from "./enki-custom-schema/plugins/DragHandle"
 import { Schema } from "prosemirror-model"
+import { makeNodes } from "./node-types"
+import { HtmlExtension } from "./enki-custom-schema/syntax-extensions/html/HtmlExtension"
 
 
 const autocompleteOpts = {
@@ -35,15 +35,25 @@ const autocompleteOpts = {
 }
 
 function buildTypeInfo(schema: Schema) {
-    for(let scheme in schema.nodes) {
+    for (let scheme in schema.nodes) {
         console.log(`${scheme}: ${schema.nodes[scheme]}`)
     }
 }
-
 class EnkiEditor {
     public view;
     // private pmu = new ProseMirrorUnified([new MarkdownExtension, new HtmlExtension]);
-    private pmu = new ProseMirrorUnified([new efmExtension, new eGFMExtension, new GFMTableExtension, new HtmlExtension, new GFMEditableTasklistExtension, new WikiLinkItemExtension, new TaggableExtension, new TextDirectiveExtension, new ContainerDirectiveExtension, new LeafDirectiveExtension]);
+    private pmu = new ProseMirrorUnified([
+        new efmExtension, 
+        new eGFMExtension, 
+        new GFMTableExtension, 
+        new GFMEditableTasklistExtension, 
+        new WikiLinkItemExtension, 
+        new TaggableExtension, 
+        new TextDirectiveExtension, 
+        new ContainerDirectiveExtension, 
+        new LeafDirectiveExtension,
+        new HtmlExtension
+    ]);
 
     constructor(target: HTMLElement, content: string) {
         const reduc = new SuggestionsManager();
@@ -54,27 +64,26 @@ class EnkiEditor {
             state: EditorState.create({
                 doc: this.pmu.parse(content),
                 plugins: [
-                ...autocomplete(autocompleteOpts as ACO),
-                    dropCursor(), 
-                    gapCursor(), 
-                    this.pmu.inputRulesPlugin(), 
-                    this.pmu.keymapPlugin(), 
-                    history(), 
+                    ...autocomplete(autocompleteOpts as ACO),
+                    dropCursor(),
+                    gapCursor(),
+                    this.pmu.inputRulesPlugin(),
+                    this.pmu.keymapPlugin(),
+                    history(),
 
-                    columnResizing({View: TableView}), 
+                    columnResizing({ View: TableView }),
                     tableEditing(),
                     keymap({
                         "Tab": goToNextCell(1),
                         "Shift-Tab": goToNextCell(-1),
                         "Mod-z": undo,
-                        "Mod-y": redo, 
+                        "Mod-y": redo,
                     }),
                     DragHandle,
                 ],
                 schema: this.pmu.schema(),
             }),
             nodeViews: {
-                html (node, view, getPos) { return new HtmlEditableView(node, view, getPos) },
                 "markdown-block-directive": (node, view, getPos) => new ContainerDirectiveView(node, view, getPos),
                 "markdown-text-directive": (node, view, getPos) => new TextDirectiveView(node, view, getPos),
                 "markdown-leaf-directive": (node, view, getPos) => new LeafDirectiveView(node, view, getPos),
@@ -82,6 +91,7 @@ class EnkiEditor {
             }
         })
 
+        makeNodes(this.pmu.schema());
         // applyDevTools(this.view);
     }
 }
@@ -93,7 +103,7 @@ setFragmentHandler({
             func: (args) => {
                 const url = args.url;
                 const elem = document.createElement('iframe');
-                
+
                 elem.width = "500";
                 elem.height = "350";
                 elem.title = "YouTube Video Player";
@@ -110,5 +120,5 @@ setFragmentHandler({
 
 window.onload = () => {
     let place = document.querySelector("#editor");
-    let view: EnkiEditor = new EnkiEditor(<HTMLElement>place, data);  
+    let view: EnkiEditor = new EnkiEditor(<HTMLElement>place, data);
 }

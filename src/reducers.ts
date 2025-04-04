@@ -1,8 +1,7 @@
 import { ActionKind, AutocompleteAction, FromTo } from "prosemirror-autocomplete";
 import { EditorView } from "prosemirror-view";
 import { makeNode, nodeTypes } from "./node-types"
-import { replace } from "lodash";
-import { NodeSelection, TextSelection } from "prosemirror-state";
+import { NodeSelection } from "prosemirror-state";
 
 enum State {
     Open = 1,
@@ -166,7 +165,7 @@ export class SuggestionsManager {
                 )
             this.view.dispatch(tr);
         } else {
-            const replaceWith = makeNode(this.filterView[this.index][1], this.view.state.schema);
+            const replaceWith = makeNode(this.filterView[this.index][2], this.view.state.schema);
             
             if(replaceWith == undefined)
                 return false;
