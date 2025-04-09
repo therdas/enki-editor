@@ -3,6 +3,8 @@ hi <boy>no</boy> oea
 
 <h1>WHAT</h1>
 
+![foo](chrome://branding/content/about-logo.png)
+
 ok then
 
 # Markdown: Syntax
@@ -64,9 +66,10 @@ testing <b>markdowner</b> testing
 <b>   hey world   </b>
 </div>
 
-| foo | bar |age|
-| :-- | --: |--|
-| baz | qux |agee|
+> BQOTTAB
+> | foo | bar |age|
+> | :-- | --: |--|
+> | baz | qux |agee|
 
 | foo | bar |
 | :-- | --: |

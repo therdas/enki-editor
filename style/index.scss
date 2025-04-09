@@ -1,115 +1,213 @@
-.ProseMirror  {
-    display: block;
-    width: 100vw;
-    outline: none;
-    border: none;
-    padding-left: 2em;
+.prosemirror-html-embed-editing {
+    display: inline-block;
 }
 
-.ProseMirror:hover {
-    outline: none;
-    border: none;
-}
-
-.ProseMirror-menubar {
+.prosemirror-html-editor {
+    position: fixed;
     display: flex;
     flex-direction: row;
-    width: 100vw;
-    height: 2em;
-    background-color: red;
-    min-height: 1em !important;
+    min-height: 1.2em;
+
+    & > code {
+        display: block;
+
+    }
 }
 
-.ProseMirror-menuitem {
-    display: block;
-}
-
-.ProseMirror-example-setup-style hr {
-padding: 2px 10px;
-border: none;
-margin: 1em 0;
-}
-
-.ProseMirror-example-setup-style hr:after {
-content: "";
-display: block;
-height: 1px;
-background-color: silver;
-line-height: 2px;
-}
-
-.ProseMirror ul, .ProseMirror ol {
-padding-left: 30px;
-}
-
-.ProseMirror blockquote {
-padding-left: 1em;
-border-left: 3px solid #eee;
-margin-left: 0; margin-right: 0;
-}
-
-.ProseMirror-example-setup-style img {
-cursor: default;
-}
-
-.ProseMirror-prompt {
-background: white;
-padding: 5px 10px 5px 15px;
-border: 1px solid silver;
-position: fixed;
-border-radius: 3px;
-z-index: 11;
-box-shadow: -.5px 2px 5px rgba(0, 0, 0, .2);
-}
-
-.ProseMirror-prompt h5 {
-margin: 0;
-font-weight: normal;
-font-size: 100%;
-color: #444;
-}
-
-.ProseMirror-prompt input[type="text"],
-.ProseMirror-prompt textarea {
-background: #eee;
-border: none;
-outline: none;
-}
-
-.ProseMirror-prompt input[type="text"] {
-padding: 0 4px;
-}
-
-.ProseMirror-prompt-close {
-position: absolute;
-left: 2px; top: 1px;
-color: #666;
-border: none; background: transparent; padding: 0;
-}
-
-.ProseMirror-prompt-close:after {
-content: "✕";
-font-size: 12px;
-}
-
-.ProseMirror-invalid {
-background: #ffc;
-border: 1px solid #cc7;
-border-radius: 4px;
-padding: 5px 10px;
-position: absolute;
-min-width: 10em;
-}
-
-.ProseMirror-prompt-buttons {
-margin-top: 5px;
-display: none;
-}
-
-.porsemirror-embedded-html {
-    position: relative;
-}
-
-.prosemirror-embedded-html {
+.tooltip {
     position: absolute;
-}
+    pointer-events: none;
+    z-index: 20;
+    background: white;
+    border: 1px solid silver;
+    border-radius: 2px;
+    padding: 2px 10px;
+    margin-bottom: 7px;
+    -webkit-transform: translateX(-50%);
+    transform: translateX(-50%);
+  }
+  .tooltip:before {
+    content: "";
+    height: 0; width: 0;
+    position: absolute;
+    left: 50%;
+    margin-left: -5px;
+    bottom: -6px;
+    border: 5px solid transparent;
+    border-bottom-width: 0;
+    border-top-color: silver;
+  }
+  .tooltip:after {
+    content: "";
+    height: 0; width: 0;
+    position: absolute;
+    left: 50%;
+    margin-left: -5px;
+    bottom: -4.5px;
+    border: 5px solid transparent;
+    border-bottom-width: 0;
+    border-top-color: white;
+  }
+
+/**
+    For Prism.js
+*/
+/**
+ * Darcula theme
+ *
+ * Adapted from a theme based on:
+ * IntelliJ Darcula Theme (https://github.com/bulenkov/Darcula)
+ *
+ * @author Alexandre Paradis <service.paradis@gmail.com>
+ * @version 1.0
+ */
+
+ code[class*="language-"],
+ pre[class*="language-"] {
+     color: #a9b7c6;
+     font-family: Consolas, Monaco, 'Andale Mono', monospace;
+     direction: ltr;
+     text-align: left;
+     white-space: pre;
+     word-spacing: normal;
+     word-break: normal;
+     line-height: 1.5;
+ 
+     -moz-tab-size: 4;
+     -o-tab-size: 4;
+     tab-size: 4;
+ 
+     -webkit-hyphens: none;
+     -moz-hyphens: none;
+     -ms-hyphens: none;
+     hyphens: none;
+ }
+ 
+ pre[class*="language-"]::-moz-selection, pre[class*="language-"] ::-moz-selection,
+ code[class*="language-"]::-moz-selection, code[class*="language-"] ::-moz-selection {
+     color: inherit;
+     background: rgba(33, 66, 131, .85);
+ }
+ 
+ pre[class*="language-"]::selection, pre[class*="language-"] ::selection,
+ code[class*="language-"]::selection, code[class*="language-"] ::selection {
+     color: inherit;
+     background: rgba(33, 66, 131, .85);
+ }
+ 
+ /* Code blocks */
+ pre[class*="language-"] {
+     padding: 1em;
+     margin: .5em 0;
+     overflow: auto;
+ }
+ 
+ :not(pre) > code[class*="language-"],
+ pre[class*="language-"] {
+     background: #2b2b2b;
+ }
+ 
+ /* Inline code */
+ :not(pre) > code[class*="language-"] {
+     padding: .1em;
+     border-radius: .3em;
+ }
+ 
+ .token.comment,
+ .token.prolog,
+ .token.cdata {
+     color: #808080;
+ }
+ 
+ .token.delimiter,
+ .token.boolean,
+ .token.keyword,
+ .token.selector,
+ .token.important,
+ .token.atrule {
+     color: #cc7832;
+ }
+ 
+ .token.operator,
+ .token.punctuation,
+ .token.attr-name {
+     color: #a9b7c6;
+ }
+ 
+ .token.tag,
+ .token.tag .punctuation,
+ .token.doctype,
+ .token.builtin {
+     color: #e8bf6a;
+ }
+ 
+ .token.entity,
+ .token.number,
+ .token.symbol {
+     color: #6897bb;
+ }
+ 
+ .token.property,
+ .token.constant,
+ .token.variable {
+     color: #9876aa;
+ }
+ 
+ .token.string,
+ .token.char {
+     color: #6a8759;
+ }
+ 
+ .token.attr-value,
+ .token.attr-value .punctuation {
+     color: #a5c261;
+ }
+ 
+ .token.attr-value .punctuation:first-child {
+     color: #a9b7c6;
+ }
+ 
+ .token.url {
+     color: #287bde;
+     text-decoration: underline;
+ }
+ 
+ .token.function {
+     color: #ffc66d;
+ }
+ 
+ .token.regex {
+     background: #364135;
+ }
+ 
+ .token.bold {
+     font-weight: bold;
+ }
+ 
+ .token.italic {
+     font-style: italic;
+ }
+ 
+ .token.inserted {
+     background: #294436;
+ }
+ 
+ .token.deleted {
+     background: #484a4a;
+ }
+ 
+ code.language-css .token.property,
+ code.language-css .token.property + .token.punctuation {
+     color: #a9b7c6;
+ }
+ 
+ code.language-css .token.id {
+     color: #ffc66d;
+ }
+ 
+ code.language-css .token.selector > .token.class,
+ code.language-css .token.selector > .token.attribute,
+ code.language-css .token.selector > .token.pseudo-class,
+ code.language-css .token.selector > .token.pseudo-element {
+     color: #ffc66d;
+ }

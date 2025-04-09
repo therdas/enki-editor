@@ -26,6 +26,7 @@ export class TableView implements NodeView {
     this.node = node;
     updateColumnsOnResize(node, this.colgroup, this.table, this.cellMinWidth);
     updateColumnAlignments(node, this.dom);
+
     return true;
   }
 

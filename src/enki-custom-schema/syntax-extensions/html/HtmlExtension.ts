@@ -4,6 +4,86 @@ import { NodeExtension } from "prosemirror-unified";
 import { remarkFixRootHTML, remarkCombineHTMLTagPairs }  from "../../plugins/html";
 import { Processor } from "unified";
 import { Node } from "unist";
+import { Decoration, DecorationSource, EditorView, NodeView, NodeViewConstructor, ViewMutationRecord } from "prosemirror-view";
+import { highlight, languages,  } from "prismjs";
+import { NodeSelection, Selection, SelectionRange } from "prosemirror-state";
+
+export class HtmlViewExtension implements NodeView {
+    dom: HTMLElement;
+    renderer: HTMLElement;
+    editor: HTMLElement | null;
+
+    constructor(public node: PMNode, public outerView: EditorView, public getPos: () => number | undefined) {
+        this.dom = document.createElement('div');
+        this.dom.classList.add('prosemirror-html-embed');
+
+        this.renderer = this.dom.appendChild(document.createElement('div'));
+        this.renderer.classList.add('prosemirror-unsafe');
+        this.renderer.innerHTML = this.node.textContent;
+
+        this.editor = null;
+    }
+
+    selectNode() {
+        console.log("Select called", this.editor);
+        this.dom.classList.add('prosemirror-html-embed-editing');
+        if (!this.editor) 
+            this.open();
+    }
+    
+    deselectNode() {
+        this.dom.classList.remove('prosemirror-html-embed-editing');
+        this.close()
+    }
+
+    open() {
+        if(this.editor !== null)
+            return;
+
+        this.editor = document.body.appendChild(document.createElement('div'));
+
+        this.editor.classList.add('prosemirror-html-editor');
+
+        let text = this.editor.appendChild(document.createElement('code'));
+        text.contentEditable = "true";
+        text.innerHTML = highlight(this.node.textContent, languages.html, 'html');
+        text.classList.add('language-html', 'language-js', 'language-css');
+
+        let done = this.editor.appendChild(document.createElement('done'));
+        done.addEventListener('click', this.sync.bind(this, text));
+        done.classList.add('font-icon');
+        done.textContent = '✓'
+        
+        let pos =  (this.outerView.domAtPos(this.outerView.state.selection.from).node as HTMLElement).getBoundingClientRect();
+        
+        this.editor.style.top = pos.top + 'px';
+        this.editor.style.left = pos.left + 'px';
+        console.log(this.editor.style.top);
+    }
+
+    close() {
+        console.log("what");
+        if(this.editor) {
+            console.log(":REMOVING");
+            document.body.removeChild(this.editor);
+            this.editor = null;
+        }
+    }
+
+    sync(elem: HTMLElement, event: Event){
+
+        let tr = this.outerView.state.tr.replaceRangeWith(
+            this.outerView.state.selection.from,
+            this.outerView.state.selection.to,
+            this.outerView.state.schema.nodes['html'].create(null, this.outerView.state.schema.text(elem.textContent + ''))
+        );
+
+        // Update from and to. Assume that from stays same.
+
+        this.outerView.dispatch(tr);
+        this.close();
+    }
+}
 
 export class HtmlExtension extends NodeExtension <Html> {
     proseMirrorNodeName(): string {
@@ -14,12 +94,17 @@ export class HtmlExtension extends NodeExtension <Html> {
         return 'html';
     }
 
+    proseMirrorNodeView(): NodeViewConstructor | null {
+        return (node: PMNode, view: EditorView, getPos: () => number | undefined) => new HtmlViewExtension(node, view, getPos);
+    }
+
     proseMirrorNodeSpec(): NodeSpec | null {
         return {
             content: "text*",
             group: "inline",
             inline: true,
             code: true,
+            atom: true,
             marks: '',
             toDOM: (node: PMNode) => {
                 return ['code', 0]
