@@ -49,6 +49,45 @@
     border-top-color: white;
   }
 
+.tableWrapper {
+    display: grid;
+    grid-template-columns: auto 1.25em;
+    grid-template-rows: auto 1.4em;
+    width: fit-content;
+    grid-template-areas: 
+        "table col"
+        "row blank";
+    box-sizing: border-box;
+    
+    & > .pm-table-col-adder, & > .pm-table-row-adder {
+        display: block;
+        display: none;
+        content: '+';
+        text-align: center;
+        background-color: rgba(#000000, 0.2);
+        border-radius: 2px;
+        cursor: pointer
+    }
+
+    & > .pm-table-col-adder {
+        grid-area: col;
+    }
+
+    & > .pm-table-row-adder {
+        grid-area: row;
+    }
+
+    &:hover > {
+        .pm-table-col-adder {
+            display: block;
+        }
+    
+        .pm-table-row-adder {
+            display: block;
+        }
+    }
+}
+
 /**
     For Prism.js
 */

@@ -24,6 +24,8 @@ import { Schema } from "prosemirror-model"
 import { makeNodes } from "./node-types"
 import { HtmlExtension } from "./enki-custom-schema/syntax-extensions/html/HtmlExtension"
 import { selectionSizePlugin } from "./enki-custom-schema/syntax-extensions/Table/TableNiceEditor"
+import { menuBar } from "./enki-custom-schema/syntax-extensions/menu"
+import { update } from "lodash"
 
 
 const autocompleteOpts = {

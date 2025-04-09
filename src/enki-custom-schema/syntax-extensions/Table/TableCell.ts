@@ -7,7 +7,7 @@ import {
 } from "prosemirror-model";
 import { TextSelection, type Command, type EditorState, type Transaction } from "prosemirror-state";
 
-import { addRowAfter, goToNextCell, isInTable, selectedRect, TableMap, tableNodes} from "prosemirror-tables";
+import { addColumnAfter, addRowAfter, goToNextCell, isInTable, selectedRect, TableMap, tableNodes} from "prosemirror-tables";
 
 import { createProseMirrorNode, NodeExtension } from "prosemirror-unified";
 
@@ -22,8 +22,28 @@ export function addRowAfterLast (state: EditorState, dispatch?: (tr: Transaction
     
 
     // Make new row if it is the last row
-    if((rect.top + 1 == table.height) && dispatch && view)
-        addRowAfter(view.state, dispatch);
+    if((rect.top + 1 == table.height) && dispatch && view) {
+        addRowAfter(state, dispatch);
+        console.log('Aafeaefe', goToNextCell(1)(view.state, dispatch));
+    }
+
+    return true;
+}
+
+export function addColumnAfterLast (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView): boolean {
+    if(!isInTable(state))
+       return false;
+
+    let rect = selectedRect(state);
+    let table = rect.map;
+    
+    console.log('what', rect.left, table.width)
+
+    // Make new row if it is the last row
+    if((rect.left + 1 == table.width) && dispatch && view) {
+        addColumnAfter(state, dispatch);
+        console.log('Aafeaefe', goToNextCell(1)(view.state, dispatch));
+    }
 
     return true;
 }
@@ -43,8 +63,8 @@ export function moveToNextRow(state: EditorState, dispatch?: (tr: Transaction) =
         return false;
 
     const selStart = map.positionAt(row + 1, col, rect.table) + rect.tableStart + 1; // +1 because we want to point _inside_ the cell.
-    const $selStart = view?.state.doc.resolve(selStart);
-    const $selEnd = view?.state.doc.resolve(($selStart?.pos ?? 0) + ($selStart?.nodeAfter?.nodeSize ?? 0))
+    const $selStart = state.doc.resolve(selStart);
+    const $selEnd = state.doc.resolve(($selStart?.pos ?? 0) + ($selStart?.nodeAfter?.nodeSize ?? 0))
 
     if(!$selStart) return false;
 
@@ -60,9 +80,10 @@ export function nullCmd (state: EditorState, dispatch?: (tr: Transaction) => voi
 
 export function composeCommands(...commands: readonly Command[]): Command{
     return function (state, dispatch, view) {
+        let newState: EditorState | undefined;
         for(let command of commands) {
             if(!view) return false;
-            if(command(view.state, dispatch, view) == false) return false;
+            if(command(state, dispatch, view) == false) return false;
         }
         return true;
     }
@@ -79,7 +100,7 @@ Record<"table_cell", unknown>
         return {
             Tab: goToNextCell(1),
             "Shift-Tab": goToNextCell(-1),
-            Enter: composeCommands(addRowAfterLast, moveToNextRow),
+            Enter: addRowAfterLast,
             "Shift-Enter": nullCmd,
             
         }
@@ -93,7 +114,7 @@ Record<"table_cell", unknown>
 
         const schema = tableNodes({
             tableGroup: "block",
-            cellContent: "inline+",
+            cellContent: "inline*",
             cellAttributes: {
                 background: {
                     default: null,

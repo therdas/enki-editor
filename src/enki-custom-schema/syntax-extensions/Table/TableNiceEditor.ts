@@ -21,7 +21,7 @@ class SelectionSizeTooltip {
         if (lastState && lastState.doc.eq(state.doc) &&
             lastState.selection.eq(state.selection)) return
 
-        let type = state.selection.$from.node(state.selection.$from.depth - 2).type.name;
+        let type = state.selection.$from.node(state.selection.$from.depth).type.name;
 
         // Hide the tooltip if the selection is empty
         if (state.selection.empty && type !== 'table' && type !== 'image') {
