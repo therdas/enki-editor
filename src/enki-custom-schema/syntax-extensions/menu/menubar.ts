@@ -2,7 +2,7 @@ import crel from "crelt"
 import {Plugin, EditorState} from "prosemirror-state"
 import {EditorView} from "prosemirror-view"
 
-import {renderGrouped, MenuElement} from "./menu.ts"
+import {renderGrouped, MenuElement} from "./menu"
 
 const prefix = "ProseMirror-menubar"
 
@@ -58,18 +58,18 @@ class MenuBarView {
     this.menu.appendChild(dom)
     this.update()
 
-    if (options.floating && !isIOS()) {
-      this.updateFloat()
-      let potentialScrollers = getAllWrapping(this.wrapper)
-      this.scrollHandler = (e: Event) => {
-        let root = this.editorView.root
-        if (!((root as Document).body || root).contains(this.wrapper))
-          potentialScrollers.forEach(el => el.removeEventListener("scroll", this.scrollHandler!))
-        else
-          this.updateFloat((e.target as HTMLElement).getBoundingClientRect ? e.target as HTMLElement : undefined)
-      }
-      potentialScrollers.forEach(el => el.addEventListener('scroll', this.scrollHandler!))
-    }
+    // if (options.floating && !isIOS()) {
+    //   this.updateFloat()
+    //   let potentialScrollers = getAllWrapping(this.wrapper)
+    //   this.scrollHandler = (e: Event) => {
+    //     let root = this.editorView.root
+    //     if (!((root as Document).body || root).contains(this.wrapper))
+    //       potentialScrollers.forEach(el => el.removeEventListener("scroll", this.scrollHandler!))
+    //     else
+    //       this.updateFloat((e.target as HTMLElement).getBoundingClientRect ? e.target as HTMLElement : undefined)
+    //   }
+    //   potentialScrollers.forEach(el => el.addEventListener('scroll', this.scrollHandler!))
+    // }
   }
 
   update() {
@@ -79,20 +79,31 @@ class MenuBarView {
       this.menu.replaceChild(dom, this.menu.firstChild!)
       this.root = this.editorView.root
     }
-    this.contentUpdate(this.editorView.state)
+    this.contentUpdate(this.editorView.state);
 
-    if (this.floating) {
-      this.updateScrollCursor()
-    } else {
-      if (this.menu.offsetWidth != this.widthForMaxHeight) {
-        this.widthForMaxHeight = this.menu.offsetWidth
-        this.maxHeight = 0
-      }
-      if (this.menu.offsetHeight > this.maxHeight) {
-        this.maxHeight = this.menu.offsetHeight
-        this.menu.style.minHeight = this.maxHeight + "px"
-      }
-    }
+    const cur = this.editorView.state.selection.$anchor;
+    
+    /* We handle this by the following logic :
+        - If the element is a table cell -> select the entire table.
+        - If the node is a paragraph, check if it's ancestor is a directive-type element. If so, select that
+        - Otherwise, if the type is one of the following choose those
+            - Link
+            - Image
+    */
+
+
+    // if (this.floating) {
+    //   this.updateScrollCursor()
+    // } else {
+    //   if (this.menu.offsetWidth != this.widthForMaxHeight) {
+    //     this.widthForMaxHeight = this.menu.offsetWidth
+    //     this.maxHeight = 0
+    //   }
+    //   if (this.menu.offsetHeight > this.maxHeight) {
+    //     this.maxHeight = this.menu.offsetHeight
+    //     this.menu.style.minHeight = this.maxHeight + "px"
+    //   }
+    // }
   }
 
   updateScrollCursor() {

@@ -6,7 +6,7 @@ import { dropCursor } from "prosemirror-dropcursor"
 import { gapCursor } from "prosemirror-gapcursor"
 import { history, redo, undo } from "prosemirror-history"
 import { GFMTableExtension } from "./enki-custom-schema/syntax-extensions"
-import { tableEditing, columnResizing, goToNextCell } from "prosemirror-tables"
+import { tableEditing, columnResizing, goToNextCell, addColumn, addColumnAfter, addRowAfter } from "prosemirror-tables"
 import { keymap } from "prosemirror-keymap"
 import { TableView } from "./enki-custom-schema/syntax-extensions/Table/TableView"
 import { data } from "./data"
@@ -24,9 +24,7 @@ import { Schema } from "prosemirror-model"
 import { makeNodes } from "./node-types"
 import { HtmlExtension } from "./enki-custom-schema/syntax-extensions/html/HtmlExtension"
 import { selectionSizePlugin } from "./enki-custom-schema/syntax-extensions/Table/TableNiceEditor"
-import { menuBar } from "./enki-custom-schema/syntax-extensions/menu"
-import { update } from "lodash"
-
+import { menuPlugin } from "./enki-custom-schema/plugins/floater-menu"
 
 const autocompleteOpts = {
     triggers: [
@@ -37,11 +35,6 @@ const autocompleteOpts = {
     reducer: (arg: AutocompleteAction): boolean => false,
 }
 
-function buildTypeInfo(schema: Schema) {
-    for (let scheme in schema.nodes) {
-        console.log(`${scheme}: ${schema.nodes[scheme]}`)
-    }
-}
 class EnkiEditor {
     public view;
     // private pmu = new ProseMirrorUnified([new MarkdownExtension, new HtmlExtension]);
@@ -61,7 +54,6 @@ class EnkiEditor {
     constructor(target: HTMLElement, content: string) {
         const reduc = new SuggestionsManager();
         autocompleteOpts.reducer = reduc.reducer.bind(reduc);
-        buildTypeInfo(this.pmu.schema())
         target.replaceChildren();
         this.view = new EditorView(target, {
             state: EditorState.create({
@@ -83,7 +75,15 @@ class EnkiEditor {
                         "Mod-y": redo,
                     }),
                     DragHandle,
-                    selectionSizePlugin
+                    selectionSizePlugin,
+                    menuPlugin([
+                        {
+                            command: addRowAfter,
+                            text: 'addRow',
+                            cls: ['material-icons'],
+                            predicate: (view) => true
+                        }
+                    ])
                 ],
                 schema: this.pmu.schema(),
             }),
@@ -94,9 +94,6 @@ class EnkiEditor {
                 ...this.pmu.nodeViews(),
             }
         })
-
-        makeNodes(this.pmu.schema());
-        // applyDevTools(this.view);
     }
 }
 

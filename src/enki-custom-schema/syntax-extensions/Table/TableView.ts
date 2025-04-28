@@ -21,26 +21,6 @@ export class TableView implements NodeView {
     updateColumnsOnResize(node, this.colgroup, this.table, cellMinWidth);
     this.contentDOM = this.table.appendChild(document.createElement('tbody'));
     updateColumnAlignments(node, this.dom);
-
-    const coladder = this.dom.appendChild(document.createElement('div'));
-    coladder.classList.add('pm-table-col-adder');
-    coladder.textContent = '+';
-    coladder.addEventListener('click', () => {
-      view.focus();
-      view.dispatch(view.state.tr.setSelection(new TextSelection(view.state.selection.$anchor, view.state.doc.resolve(view.state.selection.head - 5))));
-      console.log(">", addColumnAfterLast(view.state, view.dispatch, view));
-    })
-
-    
-
-    const rowadder = this.dom.appendChild(document.createElement('div'));
-    rowadder.classList.add('pm-table-row-adder');
-    rowadder.textContent = '+';
-    rowadder.addEventListener('click', () => {
-      view.focus();
-      view.dispatch(view.state.tr.setSelection(new TextSelection(view.state.selection.$anchor, view.state.doc.resolve(view.state.selection.head - 4))));
-      console.log(addRowAfterLast(view.state, view.dispatch, view));
-    })
   }
 
   update(node: PMNode): boolean {

@@ -25,7 +25,6 @@ export class HtmlViewExtension implements NodeView {
     }
 
     selectNode() {
-        console.log("Select called", this.editor);
         this.dom.classList.add('prosemirror-html-embed-editing');
         if (!this.editor) 
             this.open();
@@ -58,13 +57,10 @@ export class HtmlViewExtension implements NodeView {
         
         this.editor.style.top = pos.top + 'px';
         this.editor.style.left = pos.left + 'px';
-        console.log(this.editor.style.top);
     }
 
     close() {
-        console.log("what");
         if(this.editor) {
-            console.log(":REMOVING");
             document.body.removeChild(this.editor);
             this.editor = null;
         }

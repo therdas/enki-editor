@@ -24,8 +24,9 @@ export function addRowAfterLast (state: EditorState, dispatch?: (tr: Transaction
     // Make new row if it is the last row
     if((rect.top + 1 == table.height) && dispatch && view) {
         addRowAfter(state, dispatch);
-        console.log('Aafeaefe', goToNextCell(1)(view.state, dispatch));
+        moveToNextRow(view!.state, dispatch);
     }
+
 
     return true;
 }
@@ -37,12 +38,10 @@ export function addColumnAfterLast (state: EditorState, dispatch?: (tr: Transact
     let rect = selectedRect(state);
     let table = rect.map;
     
-    console.log('what', rect.left, table.width)
 
     // Make new row if it is the last row
     if((rect.left + 1 == table.width) && dispatch && view) {
         addColumnAfter(state, dispatch);
-        console.log('Aafeaefe', goToNextCell(1)(view.state, dispatch));
     }
 
     return true;
@@ -62,7 +61,7 @@ export function moveToNextRow(state: EditorState, dispatch?: (tr: Transaction) =
     if(row >= map.height - 1 || col >= map.width - 1)
         return false;
 
-    const selStart = map.positionAt(row + 1, col, rect.table) + rect.tableStart + 1; // +1 because we want to point _inside_ the cell.
+    const selStart = map.positionAt(row + 1, col - 1, rect.table) + rect.tableStart + 1; // +1 because we want to point _inside_ the cell.
     const $selStart = state.doc.resolve(selStart);
     const $selEnd = state.doc.resolve(($selStart?.pos ?? 0) + ($selStart?.nodeAfter?.nodeSize ?? 0))
 

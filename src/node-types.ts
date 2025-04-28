@@ -31,22 +31,13 @@ function rationalizeName(name: string): string {
     return ["", ...name.split('_').flatMap(val => val.split('-'))].reduce((prev, cur) =>  prev + " " + cur.slice(0,1).toUpperCase() + cur.slice(1) );
 }
 
-export function makeNodes(schema: Schema): [string, string, string][] {
-    let types: [string, string, string][] = [];
 
-    for(let type in schema.nodes) {
-        console.log("Registering ", type);
-    }
-
-    return types;
-}
 
 export function makeNode(type: string, schema: Schema): [PMNode, number, number] | undefined {
 
     const node_type = schema.nodes[type];
     if(!node_type) {
         if (type.slice(0, -1) === 'heading') {
-            console.log("Got heading?")
             const heading_level = Number.parseInt(type.slice(-1));
             const node_type = schema.nodes[type.slice(0, -1)];
             return [
@@ -57,7 +48,7 @@ export function makeNode(type: string, schema: Schema): [PMNode, number, number]
                 0,0
             ]
         } else {
-            console.log("Undefined node?", type)
+            console.log("Undefined node ?", type)
         }
     } else {
         return [

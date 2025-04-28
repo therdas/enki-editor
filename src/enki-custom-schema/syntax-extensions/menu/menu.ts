@@ -5,7 +5,7 @@ import {EditorView} from "prosemirror-view"
 import {EditorState, Transaction, NodeSelection} from "prosemirror-state"
 import {NodeType, Attrs} from "prosemirror-model"
 
-import {getIcon} from "./icons.ts"
+import {getIcon} from "./icons"
 
 /// The types defined in this module aren't the only thing you can
 /// display in your menu. Anything that conforms to this interface can
