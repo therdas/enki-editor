@@ -1,13 +1,5 @@
-* {
-    white-space: pre-wrap;
-}
-
-.prosemirror-html-embed-editing {
-    display: inline-block;
-}
-
 .prosemirror-html-editor {
-    position: fixed;
+    position: absolute;
     display: flex;
     flex-direction: row;
     min-height: 1.2em;
@@ -18,7 +10,9 @@
     }
 }
 
-
+.menubar{
+  transform: translateY(-2.3em);
+}
 
 .tooltip {
     position: absolute;

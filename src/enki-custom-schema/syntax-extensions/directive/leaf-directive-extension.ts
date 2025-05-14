@@ -1,13 +1,11 @@
 import { Node as UnistNode } from "unist";
-import { Fragment, NodeSpec, Node as PMNode, Schema } from "prosemirror-model";
+import { NodeSpec, Node as PMNode, Schema } from "prosemirror-model";
 import { NodeExtension } from "prosemirror-unified";
 import { LeafDirective } from "mdast-util-directive"
 import { Processor } from "unified";
 import remarkDirective from "remark-directive";
 import { PhrasingContent } from "mdast";
 import { EditorView, NodeView } from "prosemirror-view";
-import { Command, NodeSelection } from "prosemirror-state";
-import { selectDocEnd } from "@codemirror/commands";
 
 export class LeafDirectiveView implements NodeView {
     dom: HTMLElement;

@@ -6,7 +6,7 @@ import { dropCursor } from "prosemirror-dropcursor"
 import { gapCursor } from "prosemirror-gapcursor"
 import { history, redo, undo } from "prosemirror-history"
 import { GFMTableExtension } from "./enki-custom-schema/syntax-extensions"
-import { tableEditing, columnResizing, goToNextCell, addColumn, addColumnAfter, addRowAfter } from "prosemirror-tables"
+import { tableEditing, columnResizing, goToNextCell, addRowAfter } from "prosemirror-tables"
 import { keymap } from "prosemirror-keymap"
 import { TableView } from "./enki-custom-schema/syntax-extensions/Table/TableView"
 import { data } from "./data"
@@ -20,11 +20,10 @@ import { SuggestionsManager } from "./reducers"
 import { AutocompleteAction, Options as ACO } from "prosemirror-autocomplete"
 import { TextDirectiveExtension, TextDirectiveView, ContainerDirectiveExtension, ContainerDirectiveView, LeafDirectiveExtension, LeafDirectiveView, setFragmentHandler } from './enki-custom-schema/syntax-extensions/directive'
 import { DragHandle } from "./enki-custom-schema/plugins/DragHandle"
-import { Schema } from "prosemirror-model"
-import { makeNodes } from "./node-types"
 import { HtmlExtension } from "./enki-custom-schema/syntax-extensions/html/HtmlExtension"
 import { selectionSizePlugin } from "./enki-custom-schema/syntax-extensions/Table/TableNiceEditor"
-import { menuPlugin } from "./enki-custom-schema/plugins/floater-menu"
+import { isNodeActive, menuPlugin } from "./enki-custom-schema/plugins/floater-menu"
+import { toggleMark } from "prosemirror-commands"
 
 const autocompleteOpts = {
     triggers: [
@@ -78,11 +77,36 @@ class EnkiEditor {
                     selectionSizePlugin,
                     menuPlugin([
                         {
+                            command: toggleMark(this.pmu.schema().marks['strong']),
+                            text: 'bold',
+                            cls: ['material-icons'],
+                            predicate: (view) => view.state.selection.from != view.state.selection.to
+                        },
+                        {
+                            command: toggleMark(this.pmu.schema().marks['em']),
+                            text: 'italics',
+                            cls: ['material-icons'],
+                            predicate: (view) => view.state.selection.from != view.state.selection.to
+                        },
+                        {
+                            command: toggleMark(this.pmu.schema().marks['strikethrough']),
+                            text: 'strikethrough',
+                            cls: ['material-icons'],
+                            predicate: (view) => view.state.selection.from != view.state.selection.to
+                        },
+                        {
+                            command: toggleMark(this.pmu.schema().marks['code']),
+                            text: 'link',
+                            cls: ['material-icons'],
+                            predicate: (view) => view.state.selection.from != view.state.selection.to
+                        },
+                        {
                             command: addRowAfter,
                             text: 'addRow',
                             cls: ['material-icons'],
-                            predicate: (view) => true
-                        }
+                            predicate: (view) => isNodeActive(view.state, 'table')
+                        },
+                        
                     ])
                 ],
                 schema: this.pmu.schema(),

@@ -12,6 +12,7 @@ export class HtmlViewExtension implements NodeView {
     dom: HTMLElement;
     renderer: HTMLElement;
     editor: HTMLElement | null;
+    text: HTMLElement | null;
 
     constructor(public node: PMNode, public outerView: EditorView, public getPos: () => number | undefined) {
         this.dom = document.createElement('div');
@@ -22,6 +23,7 @@ export class HtmlViewExtension implements NodeView {
         this.renderer.innerHTML = this.node.textContent;
 
         this.editor = null;
+        this.text = null;
     }
 
     selectNode() {
@@ -43,17 +45,17 @@ export class HtmlViewExtension implements NodeView {
 
         this.editor.classList.add('prosemirror-html-editor');
 
-        let text = this.editor.appendChild(document.createElement('code'));
-        text.contentEditable = "true";
-        text.innerHTML = highlight(this.node.textContent, languages.html, 'html');
-        text.classList.add('language-html', 'language-js', 'language-css');
+        this.text = this.editor.appendChild(document.createElement('code'));
+        this.text.contentEditable = "true";
+        this.text.innerHTML = highlight(this.node.textContent, languages.html, 'html');
+        this.text.classList.add('language-html', 'language-js', 'language-css');
 
         let done = this.editor.appendChild(document.createElement('done'));
-        done.addEventListener('click', this.sync.bind(this, text));
+        done.addEventListener('click', this.sync.bind(this, this.text));
         done.classList.add('font-icon');
         done.textContent = '✓'
         
-        let pos =  (this.outerView.domAtPos(this.outerView.state.selection.from).node as HTMLElement).getBoundingClientRect();
+        let pos = (this.outerView.domAtPos(this.outerView.state.selection.from).node as HTMLElement).getBoundingClientRect();
         
         this.editor.style.top = pos.top + 'px';
         this.editor.style.left = pos.left + 'px';

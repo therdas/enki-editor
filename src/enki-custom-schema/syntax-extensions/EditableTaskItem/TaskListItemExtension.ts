@@ -6,7 +6,7 @@ import {
   type Node as ProseMirrorNode,
   type Schema,
 } from "prosemirror-model";
-import { NodeSelection, TextSelection, type Command } from "prosemirror-state";
+import { TextSelection, type Command } from "prosemirror-state";
 import type {
   EditorView,
   NodeView,
@@ -30,7 +30,6 @@ import {
   sinkListItem,
   splitListItem,
 } from "prosemirror-schema-list";
-import { ReplaceAroundStep } from "prosemirror-transform";
 
 export class TaskListItemView implements NodeView {
   public readonly contentDOM: HTMLElement;

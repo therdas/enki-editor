@@ -2,7 +2,7 @@ import { Extension } from "prosemirror-unified";
 import { TableCellExtension } from "./Table/TableCell.ts";
 import { TableRowExtension } from "./Table/TableRow.ts";
 import { TableExtension } from "./Table/Table.ts";
-import { BlockquoteExtension, BreakExtension, CodeBlockExtension, DefinitionExtension, ExtendedAutolinkExtension, HeadingExtension, HorizontalRuleExtension, ImageExtension, ImageReferenceExtension, InlineCodeExtension, LinkExtension, LinkReferenceExtension, ListItemExtension, MarkdownExtension, OrderedListExtension, ParagraphExtension, RootExtension, StrikethroughExtension, TextExtension, UnorderedListExtension } from "prosemirror-remark";
+import { BlockquoteExtension, BreakExtension, DefinitionExtension, ExtendedAutolinkExtension, HeadingExtension, HorizontalRuleExtension, ImageExtension, ImageReferenceExtension, InlineCodeExtension, LinkExtension, LinkReferenceExtension, ListItemExtension, MarkdownExtension, OrderedListExtension, ParagraphExtension, RootExtension, StrikethroughExtension, TextExtension, UnorderedListExtension } from "prosemirror-remark";
 import { TaskListItemExtension } from "./EditableTaskItem/TaskListItemExtension.ts";
 import { ItalicExtension } from "./italbold/ItalicsExtension.ts";
 import { BoldExtension } from "./italbold/BoldExtension.ts";
@@ -10,6 +10,7 @@ import { Node as UnistNode } from "unist";
 import { Processor } from "unified";
 import remarkParse from "remark-parse";
 import remarkStringify from "remark-stringify";
+import { CodeBlockExtension } from "./code/index.ts";
 export {
     TableCellExtension,
     TableExtension,

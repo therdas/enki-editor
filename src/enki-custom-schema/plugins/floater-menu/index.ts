@@ -25,26 +25,25 @@ function findContainerParent(selection: Selection, state: EditorState) {
         $anchor = state.doc.resolve(offset - 1);
         type = $anchor.node().type.name;
         
+
         // Check if we need to move the goalpost
         let check = hoist_to.get(type);
         if(check)
             hoistTo = check;
 
-        // Special case for paragraph, hoist once                                and only once
+        // Special case for paragraph, hoist once and only once
         if(hoistTo == '^'){
-            console.log("found")
             break;
         }
     } while(!type.endsWith(hoistTo) && $anchor.pos >= 0);
     
-
-    if((type.endsWith(hoistTo) || hoistTo == '^') && type !== 'doc')
+    if((type.endsWith(hoistTo)) && type !== 'doc')
         return $anchor;
     else
         return selection.$anchor;
 }
 
-function isNodeActive(state: EditorState, typeOrName: NodeType | string) : boolean {
+export function isNodeActive(state: EditorState, typeOrName: NodeType | string) : boolean {
     const { from, to, empty } = state.selection;
     const type = typeOrName instanceof NodeType ? typeOrName.name : typeOrName;
 
@@ -135,14 +134,19 @@ export class MenuView {
         }) 
     }
     update() {
-        this.items.forEach(({predicate, _dom}) =>  {
-            let active = predicate(this.editorView);
-            this.dom.style.display = active ? "" : "none";
+        let show = false;
+        this.items.forEach(({text, predicate, _dom}) =>  {
+            show = show || predicate(this.editorView);
+            _dom!.style.display = predicate(this.editorView) ? "" : "none";
+            console.log(this.editorView.state.schema.marks);
         })
 
+
+        this.dom.style.display = show ? "" : "none";
         let $parent = findContainerParent(this.editorView.state.selection, this.editorView.state)
-        let rect = this.editorView.coordsAtPos($parent.before())
-        console.log('rect', rect.top, rect.left)
+        console.log(">>", $parent.node().type.name);
+        let pos = $parent.node().type.name !== 'paragraph' ? $parent.pos - $parent.parentOffset : $parent.pos
+        let rect = this.editorView.coordsAtPos(pos)
 
         this.dom.style.top = rect.top + window.scrollY + 'px';
         this.dom.style.left = rect.left + 'px';

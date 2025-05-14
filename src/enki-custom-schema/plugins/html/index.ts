@@ -1,11 +1,7 @@
 import { Node, Position } from "unist";
 import { visitParents } from "unist-util-visit-parents"
-import { Check, Test, convert } from "unist-util-is";
 import { Parent } from "unist";
-import { Html, Paragraph } from "mdast";
-import { html } from "@codemirror/lang-html";
-import { findAllAfter } from "unist-util-find-all-after";
-import findAllBetween from "unist-util-find-all-between";
+import { Html } from "mdast";
 import { remove } from "unist-util-remove";
 import { visit } from "unist-util-visit";
 

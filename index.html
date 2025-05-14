@@ -1,9 +1,12 @@
 <html>
-
 <head>
     <title>MyPage</title>
     <script type="module" src="./src/index.ts"></script>
     <style>
+        html {
+            margin: 0;
+            padding: 0;
+        }
         body {
             margin: 0;
             padding: 0;
@@ -29,11 +32,12 @@
         }
 
         #editor {
+            white-space: pre-wrap;
             width: 80vw;
             margin-left: auto;
             margin-right: auto;
             margin-top: 0;
-
+            padding-top: 0;
         }
 
         .prosemirror-embedded-html {
@@ -88,10 +92,6 @@
             height: auto;
         }
     </style>
-</head>
-
-<body>
-    <div id="editor">
-    </div>
+</head><body><div id="editor"></div>
 </body>
 <html>
