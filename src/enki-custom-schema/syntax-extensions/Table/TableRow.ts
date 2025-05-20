@@ -46,10 +46,10 @@ export class TableRowExtension extends NodeExtension<TableRow> {
     }
 
     public override unistNodeToProseMirrorNodes(
-        node: TableRow, 
+        _: TableRow, 
         schema: Schema<string, string>, 
         convertedChildren: Array<ProseMirrorNode>, 
-        context: Partial<Record<string, never>>
+        __: Partial<Record<string, never>>
     ): Array<ProseMirrorNode> {
         return createProseMirrorNode(
             this.proseMirrorNodeName(),

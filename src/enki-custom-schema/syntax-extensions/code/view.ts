@@ -2,16 +2,15 @@ import {
   EditorView as CodeMirror, KeyBinding, ViewUpdate, keymap as cmKeymap, drawSelection,
 } from "@codemirror/view"
 import { defaultKeymap } from "@codemirror/commands"
-import { syntaxHighlighting, defaultHighlightStyle, Language, LanguageSupport } from "@codemirror/language"
+import { syntaxHighlighting, defaultHighlightStyle } from "@codemirror/language"
 
 import { exitCode } from "prosemirror-commands"
 import { undo, redo } from "prosemirror-history"
 import { EditorView, EditorView as PMEditorView, NodeView as PMNodeView } from "prosemirror-view"
-import { keymap } from "prosemirror-keymap"
 import { Node } from "prosemirror-model"
-import { Command, EditorState, Selection, TextSelection, Transaction } from "prosemirror-state"
+import { EditorState, Selection, TextSelection, Transaction } from "prosemirror-state"
 import { SelectionRange as CMSelectionRange, Compartment } from "@codemirror/state"
-import { EditorSelection, Line } from "@codemirror/state"
+import { Line } from "@codemirror/state"
 
 import { cpp } from "@codemirror/lang-cpp";
 import { angular } from "@codemirror/lang-angular";
@@ -31,7 +30,6 @@ import { vue } from "@codemirror/lang-vue";
 import { wast } from "@codemirror/lang-wast";
 import { xml } from "@codemirror/lang-xml";
 import { yaml } from "@codemirror/lang-yaml";
-import { set } from "lodash"
 
 const LanguageMap = new Map<string, any>([
   ["C/C++", cpp],
@@ -69,6 +67,7 @@ export class CodeBlockView implements PMNodeView {
   updating = false;
   footer: HTMLElement;
   langHolder: Compartment;
+  langSelector: HTMLSelectElement | null = null;
 
   constructor(private node: Node, private view: PMEditorView, private getPos: () => number | undefined) {
 
@@ -91,6 +90,7 @@ export class CodeBlockView implements PMNodeView {
 
     // The editor's outer node is our DOM representation
     this.dom = document.createElement('div');
+    this.dom.classList.add('prosemirror-codemirror-codeblock')
     this.footer = this.dom.appendChild(document.createElement('div'))
     this.dom.appendChild(this.cm.dom);
 
@@ -98,8 +98,8 @@ export class CodeBlockView implements PMNodeView {
     // inner editor
     this.updating = false
 
-    this.footer.appendChild(this.createControls(node.attrs.lang));
-    this.initLanguage(node.attrs.lang ?? 'Markdown')
+    this.footer.appendChild(this.createControls(node.attrs.lang == null ? 'Markdown' : node.attrs.lang));
+    this.initLanguage(node.attrs.lang == null ? 'Markdown' : node.attrs.lang)
   }
 
   getProvider(name: string){
@@ -113,21 +113,30 @@ export class CodeBlockView implements PMNodeView {
       setTo = aliases.get(setTo)!;
 
     const opts = document.createElement('select');
+    opts.classList.add('prosemirror-code-selector');
+    opts.value = "Code"
     LanguageMap.forEach((_, key) => {
         const opt = opts.appendChild(document.createElement('option'));
         opt.value = key
         opt.textContent = key
       }
     )
+    console.log("Setting to ", setTo);
     opts.value = setTo
     opts.addEventListener('change', this.handleLanguageChange.bind(this));
+    this.initLanguage('Javascript');
+
+    this.langSelector = opts;
+
     return opts;
   }
 
   initLanguage(langName: string) {
     let name = aliases.get(langName) ?? langName;
     const handler = this.getProvider(name);
-    console.log(name, langName, handler)
+
+
+
     this.cm.dispatch({effects: this.langHolder.reconfigure(handler())})
   }
 
@@ -135,9 +144,18 @@ export class CodeBlockView implements PMNodeView {
     console.log("Current language", this.node.attrs.lang, "To", (event.target! as HTMLSelectElement).value)
     let newLang = (event.target! as HTMLSelectElement).value;
     let name = aliases.get(newLang) ?? newLang;
+
     const handler = this.getProvider(name);
+
     console.log(name, handler)
-    this.cm.dispatch({effects: this.langHolder.reconfigure(handler())})
+    this.cm.dispatch({effects: this.langHolder.reconfigure(handler())});
+    this.view.dispatch(this.view.state.tr.setNodeMarkup(
+      this.getPos()!,
+      undefined,
+      {
+        lang: name
+      }
+    ))
   }
 
   forwardUpdate(update: ViewUpdate) {

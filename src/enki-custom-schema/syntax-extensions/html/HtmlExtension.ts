@@ -4,9 +4,8 @@ import { NodeExtension } from "prosemirror-unified";
 import { remarkFixRootHTML, remarkCombineHTMLTagPairs }  from "../../plugins/html";
 import { Processor } from "unified";
 import { Node } from "unist";
-import { Decoration, DecorationSource, EditorView, NodeView, NodeViewConstructor, ViewMutationRecord } from "prosemirror-view";
+import { EditorView, NodeView, NodeViewConstructor } from "prosemirror-view";
 import { highlight, languages,  } from "prismjs";
-import { NodeSelection, Selection, SelectionRange } from "prosemirror-state";
 
 export class HtmlViewExtension implements NodeView {
     dom: HTMLElement;
@@ -57,7 +56,7 @@ export class HtmlViewExtension implements NodeView {
         
         let pos = (this.outerView.domAtPos(this.outerView.state.selection.from).node as HTMLElement).getBoundingClientRect();
         
-        this.editor.style.top = pos.top + 'px';
+        this.editor.style.top = pos.top + window.scrollY + 'px';
         this.editor.style.left = pos.left + 'px';
     }
 
@@ -68,7 +67,7 @@ export class HtmlViewExtension implements NodeView {
         }
     }
 
-    sync(elem: HTMLElement, event: Event){
+    sync(elem: HTMLElement, _: Event){
 
         let tr = this.outerView.state.tr.replaceRangeWith(
             this.outerView.state.selection.from,
@@ -104,7 +103,7 @@ export class HtmlExtension extends NodeExtension <Html> {
             code: true,
             atom: true,
             marks: '',
-            toDOM: (node: PMNode) => {
+            toDOM: (_: PMNode) => {
                 return ['code', 0]
             }
         }

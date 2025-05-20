@@ -1,4 +1,4 @@
-import { Node, Position } from "unist";
+import { Node } from "unist";
 import { visitParents } from "unist-util-visit-parents"
 import { Parent } from "unist";
 import { Html } from "mdast";
@@ -58,11 +58,8 @@ export function remarkCombineHTMLTagPairs() {
       let name = nodeNameFromHtmlString(htmlNodes[i][0].value);
 
       if (currentName === name && isClosing(htmlNodes[i][0].value)) {
-        const lineFrom = currentNode.position?.start
 
         let stringForm: string = "";
-        let secondNode: Node | undefined;
-        let firstNodeInRange = true;
 
         visit(tree, function (node: Node) {
           return isBetween(node.position!.start.offset!, node.position!.end.offset!, currentNode.position!.start.offset!, htmlNodes[i][0].position!.end.offset!);
@@ -71,7 +68,7 @@ export function remarkCombineHTMLTagPairs() {
             stringForm += node.value;
         })
 
-        remove(tree, function (node, index, parent) {
+        remove(tree, function (node) {
           if(isBetween(node.position!.start.offset!, node.position!.end.offset!, currentNode.position!.end.offset!, htmlNodes[i][0].position!.end.offset!)) {
             return true;
           } else {
@@ -91,8 +88,6 @@ export function remarkCombineHTMLTagPairs() {
   }
 }
 
-function hasOffset(position: Position) { return 'offset' in position}
-
 function isBetween(checkStart: number, checkEnd: number, from: number, to: number) {
     return from <= checkStart && checkEnd <= to;
 
@@ -109,7 +104,6 @@ function isLiteral(node: Node) {
 }
 
 function isClosing(html: string) { return html.charAt(1) === "/" }
-function isContainer(html: string) { return ['input', 'base', 'link', 'meta', 'hr', 'br', 'wbr', 'source', 'img', 'embed', 'track', 'area', 'col'].indexOf(html) === -1 }
 
 function nodeNameFromHtmlString(html: string) {
   // Check for closing first

@@ -1,5 +1,4 @@
 import type { PhrasingContent, TableCell } from "mdast";
-import { chainCommands } from "prosemirror-commands";
 import { 
     NodeSpec,
     Node as ProseMirrorNode,
@@ -7,7 +6,7 @@ import {
 } from "prosemirror-model";
 import { TextSelection, type Command, type EditorState, type Transaction } from "prosemirror-state";
 
-import { addColumnAfter, addRowAfter, goToNextCell, isInTable, selectedRect, TableMap, tableNodes} from "prosemirror-tables";
+import { addColumnAfter, addRowAfter, goToNextCell, isInTable, selectedRect, tableNodes} from "prosemirror-tables";
 
 import { createProseMirrorNode, NodeExtension } from "prosemirror-unified";
 
@@ -47,7 +46,7 @@ export function addColumnAfterLast (state: EditorState, dispatch?: (tr: Transact
     return true;
 }
 
-export function moveToNextRow(state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView): boolean {
+export function moveToNextRow(state: EditorState, dispatch?: (tr: Transaction) => void, _?: EditorView): boolean {
     if(!isInTable(state))
         return false;
 
@@ -73,13 +72,12 @@ export function moveToNextRow(state: EditorState, dispatch?: (tr: Transaction) =
     return true;
 }
 
-export function nullCmd (state: EditorState, dispatch?: (tr: Transaction) => void): boolean {
+export function nullCmd (_: EditorState, __?: (tr: Transaction) => void): boolean {
     return true;
 }
 
 export function composeCommands(...commands: readonly Command[]): Command{
     return function (state, dispatch, view) {
-        let newState: EditorState | undefined;
         for(let command of commands) {
             if(!view) return false;
             if(command(state, dispatch, view) == false) return false;

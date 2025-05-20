@@ -144,7 +144,8 @@ export class CodeBlockExtension extends NodeExtension<Code> {
       { lang: node.lang }
     );
   }
-  public override proseMirrorNodeView(): NodeViewConstructor | null {
+
+  public override proseMirrorNodeView(): NodeViewConstructor {
     return (node, view, getPos) => new CodeBlockView(node, view, getPos);
   }
 }

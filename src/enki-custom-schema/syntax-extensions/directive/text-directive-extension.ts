@@ -93,7 +93,7 @@ export class TextDirectiveExtension extends NodeExtension
         ]
     }
     
-    unistNodeToProseMirrorNodes(node: TextDirective, schema: Schema<string, string>, convertedChildren: Array<PMNode>, context: Partial<Record<string, never>>): Array<PMNode> {
+    unistNodeToProseMirrorNodes(node: TextDirective, schema: Schema<string, string>, convertedChildren: Array<PMNode>, _: Partial<Record<string, never>>): Array<PMNode> {
         let res = schema.nodes[this.proseMirrorNodeName()].createAndFill(
             {
                 name: node.name,

@@ -1,7 +1,7 @@
 import { ActionKind, AutocompleteAction, FromTo } from "prosemirror-autocomplete";
 import { EditorView } from "prosemirror-view";
-import { makeNode, nodeTypes } from "./node-types"
-import { NodeSelection } from "prosemirror-state";
+import { canonicals, makeNode, NodeTypes,  } from "./node-types"
+import { TextSelection } from "prosemirror-state";
 
 enum State {
     Open = 1,
@@ -9,55 +9,156 @@ enum State {
     Dirty = 4
 }
 
+export interface CompletionValues {
+    
+    keys: [string, string][]                      // Keys: Map from multiple key types to single key [eg. a -> z, b -> z]
+    values: [string, string][] | 'key'            // Val:  Map from key to value [eg. z -> `val`] or to the single key [z]
+}
+
+export type CompletionOptions = {
+    strict: boolean,
+    name: string,
+    trigger: string,
+    map: CompletionValues,
+    canonical: [string, string][]
+    mapping: (arg: string) => string;
+}[];
+
+export const TestOptions: CompletionOptions = [
+    {
+        strict: true,
+        name: 'mention',
+        trigger: '@',
+        map: {
+            keys: [
+                ['therdas', 'Rahul Das'], ['git@therdas.dev', 'Rahul Das'], 
+                ['bidexd', 'Bideepto Bhattacharya'], ['bb@gmail.com', 'Bideepto Bhattacharya'],
+                ['vahuja', 'Vani Ahuja']
+            ],
+            values: [
+                ['Rahul Das', 'therdas'], 
+                ['Bideepto Bhattacharya', 'bidexd'],
+                ['Vani Ahuja', 'vahu']
+            ]
+        },
+        canonical: [
+            ['Rahul Das', 'therdas'],
+            ['Bideepto Bhattacharya', 'bidexd'],
+            ['Vani Ahuja', 'vahuja'],
+        ],
+        mapping: (val) => '/u/' + val
+    },
+    {
+        name: 'hashtag',
+            strict: true,
+        trigger: '#',
+        map: {
+            keys: [
+                ['Main Page', 'mainpageID'],
+                ['Contents', 'contents']
+            ],
+            values: [
+                ['Main Page', '/p/mainpage'],
+                ['Contents', '/t/content']
+            ]
+        },
+        canonical: [
+            ['Main Page', 'mainpageID'],
+            ['Contents', 'contents']
+        ],
+        mapping: (val) => '/tags/' + val
+    },
+    {
+        name: 'inserter',
+        trigger: '/',
+        map: NodeTypes,
+        canonical: canonicals,
+        strict: true,
+        mapping: (val) => val,
+    }
+]
+
 export class SuggestionsManager {
-    private data: Map<string, [string, string, string][]> = new Map();
-    private filterView: [string, string, string][] = [];
     private view: EditorView | undefined
     private index: number = -1
     private range: FromTo | undefined
     private picker: HTMLElement | undefined;
     private container: HTMLElement;
     private state = State.Closed;
-    private type = '';
 
-    constructor() {
+    // Redone
+    // name -> keys and values
+    private values = new Map<string, Map<string, string>> ();
+    private mapping = new Map<string, (arg: string) => string>();
+    private suggestions = new Map<string, [string, string][]>();
+
+    private filtered: [string, string][] = [];
+    private keyed: string = '';
+
+    constructor(private options: CompletionOptions = TestOptions) {
         this.container = document.createElement('div');
         document.body.appendChild(this.container);
-        this.refreshSuggestions('mention', [['Rahul Das', 'therdas', '/u/therdas'], ['Bideepto Bhattacharya', 'bidexd', '/u/bidexd'], ['Vani Ahuja', 'vahuja', 'u/vahuja']])
-        this.refreshSuggestions('hashtag', [['Main Page', 'mainpage', '/p/mainpage'], ['contents', 'contents', '/u/content']])
-        this.refreshSuggestions('inserter', nodeTypes())
+
+
+        for(let option of options) {
+            this.refreshSuggestions(option.name, option.map);
+            this.mapping.set(option.name, option.mapping);
+            this.suggestions.set(option.name, option.canonical);
+        }
     }
 
-    refreshSuggestions(key: string, data: [string, string, string][]) {
-        this.data.set(key, data);
+    refreshSuggestions(key: string, data: CompletionValues) {
+        this.values.set(key, new Map<string, string>());
+        const mapper = this.values.get(key)!;
+
+        if(data.values !== 'key'){
+            let valMap = new Map<string, string>(data.values);
+            
+            for(let keys of data.keys) {
+                const val = valMap.get(keys[1]);
+                if(val) 
+                    mapper.set(keys[0].toLowerCase(), val)
+            }
+        } else {
+            for(let keys of data.keys)
+                mapper.set(keys[0], keys[1])
+        }
     }
 
     filter(key: string, partial: string) {
-        const dataset = this.data.get(key);
-        this.type = key;
-        if (!dataset) return;
+        console.log("Filter on ", key, partial)
+        this.keyed = key;
 
-        this.filterView = dataset.filter(arg => {
-            return arg[0].startsWith(partial) ||
-                arg[1].startsWith(partial);
-        })
+        let candidates: [string, string][] = []
+        if(partial.length === 0) {
+            const data = this.suggestions.get(key);
+            if(!data) return;
+            candidates = data;
+        } else {
+            const data = this.values.get(key);
+            if(!data) return;
+            for(let x of data.keys()) {
+                if(x.includes(partial))
+                    candidates.push([x, data.get(x)!]);
+            }
+        }
 
+        this.filtered = candidates;
         this.state |= State.Dirty;
-
-        if (this.state & State.Open) {
-            this.refreshWindow()
+        if(this.state & State.Open) {
+            console.log("Updating...");
+            this.refreshWindow();
         }
     }
 
     next() {
         if (this.index == -1) this.index = 0;
-        else this.index = (this.index + 1) % this.filterView.length;
+        else this.index = (this.index + 1) % this.filtered.length;
         this.updateSelection()
     }
 
     prev() {
-        if (this.index == -1) this.index = 0;
-        if (--this.index < 0) this.index = this.filterView.length - 1;
+        if (--this.index < 0) this.index = this.filtered.length - 1;
         this.updateSelection()
     }
 
@@ -74,7 +175,7 @@ export class SuggestionsManager {
         const parent = document.createElement('div');
         parent.classList.add('suggestions', 'list');
 
-        for (const suggestion of this.filterView) {
+        for (const suggestion of this.filtered) {
             const child = document.createElement('div');
             let title = document.createElement('span');
             let description = document.createElement('div');
@@ -87,12 +188,14 @@ export class SuggestionsManager {
                 if (!this.view || !this.range)
                     return;
 
-                if (this.index < 0 || this.index >= this.filterView.length)
+                if (this.index < 0 || this.index >= this.filtered.length)
                     return;
 
                 const tr = this.view.state.tr
                     .deleteRange(this.range.from, this.range.to)
-                    .insertText(this.filterView[this.index][2])
+                    .insertText(
+                        this.mapping.get(this.keyed)!(suggestion[1])
+                    )
                 this.view.dispatch(tr)
                 this.view.focus()
 
@@ -126,7 +229,7 @@ export class SuggestionsManager {
 
             const rect = document.getElementsByClassName('autocomplete')[0].getBoundingClientRect();
             if (rect)
-                [this.picker.style.top, this.picker.style.left] = [rect.bottom + 'px', rect.left + 'px']
+                [this.picker.style.top, this.picker.style.left] = [rect.bottom + window.scrollY + 'px', rect.left + 'px']
         }
     }
 
@@ -135,7 +238,7 @@ export class SuggestionsManager {
 
         [...this.picker.children].forEach(elem => elem.classList.remove('selected'))
 
-        if (this.index >= 0 && this.index < this.filterView.length)
+        if (this.index >= 0 && this.index < this.filtered.length)
             this.picker.children[this.index].classList.add('selected');
     }
 
@@ -143,20 +246,21 @@ export class SuggestionsManager {
         if (!this.view || !this.range)
             return;
 
-        if (this.type == 'mention' || this.type == 'hashtag') {
+        if (this.keyed == 'mention' || this.keyed == 'hashtag') {
 
-            const marker = this.type == 'mention' ? '@' : '#';
-            const type = this.type == 'mention' ? 'mention' : 'tag';
+            console.log("KEYED", this.keyed)
+            const marker = this.keyed == 'mention' ? '@' : '#';
+            const type = this.keyed == 'mention' ? 'mention' : 'tag';
 
             const tr = this.view.state.tr
                 .deleteRange(this.range.from, this.range.to)
                 .insert(
                     this.range.from,
                     this.view.state.schema.text(
-                        this.filterView[this.index][1],
+                        marker + this.filtered[this.index][0],
                         [
                             this.view.state.schema.marks['taggable'].create({
-                                href: this.filterView[this.index][2],
+                                href: this.mapping.get(this.keyed)!(this.filtered[this.index][1]),
                                 'efm-taggable-marker': marker,
                                 'efm-taggable-type': type,
                             })
@@ -164,18 +268,17 @@ export class SuggestionsManager {
                     )
                 )
             this.view.dispatch(tr);
-        } else {
-            const replaceWith = makeNode(this.filterView[this.index][2], this.view.state.schema);
+        } else if(this.keyed == 'inserter') {
+            const replaceWith = makeNode(this.filtered[this.index][1], this.view.state.schema);
             
             if(replaceWith == undefined)
                 return false;
 
             const tr = this.view.state.tr;
 
-            tr.replaceRangeWith(this.range.from - 1, this.range.to,
-                    replaceWith[0]
-            ).setSelection(
-                new NodeSelection(
+            tr.replaceRangeWith(this.range.from - 1, this.range.to, replaceWith[0])
+              .setSelection(
+                new TextSelection(
                     tr.doc.resolve(this.range.from + replaceWith[1]), 
                 )
             );

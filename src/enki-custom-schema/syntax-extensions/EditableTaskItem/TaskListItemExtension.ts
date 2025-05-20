@@ -101,7 +101,7 @@ export class TaskListItemExtension extends NodeExtension<ListItem> {
         let transaction = state.tr;
         transaction.replaceRangeWith(
           start - 2,
-          start + wrappingNode.nodeSize,
+          start + wrappingNode.nodeSize - 1,
           proseMirrorSchema.nodes[this.proseMirrorNodeName()].create(
             { checked: match[1] === "x" },
             wrappingNode.content.cut(3 + match[1].length)

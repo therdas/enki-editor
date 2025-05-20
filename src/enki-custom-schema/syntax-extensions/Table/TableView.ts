@@ -1,8 +1,6 @@
 import { Node as PMNode } from 'prosemirror-model';
 import { EditorView, NodeView, ViewMutationRecord } from 'prosemirror-view';
 import { updateColumnsOnResize } from 'prosemirror-tables';
-import { addColumnAfterLast, addRowAfterLast } from './TableCell';
-import { TextSelection } from 'prosemirror-state';
 
 /**
  * @public
@@ -13,7 +11,7 @@ export class TableView implements NodeView {
   public colgroup: HTMLTableColElement;
   public contentDOM: HTMLTableSectionElement;
 
-  constructor(public node: PMNode, public cellMinWidth: number, view: EditorView) {
+  constructor(public node: PMNode, public cellMinWidth: number, _: EditorView) {
     this.dom = document.createElement('div');
     this.dom.className = 'tableWrapper';
     this.table = this.dom.appendChild(document.createElement('table'));

@@ -5,13 +5,15 @@ import { NodeSelection, Plugin } from "prosemirror-state";
 import { EditorView } from "prosemirror-view";
 import { ResolvedPos, Slice } from "prosemirror-model";
 import { throttle } from "lodash";
-import { serializeForClipboard } from '../../../node_modules/prosemirror-view/src/clipboard.ts'
+import { serializeForClipboard } from "./serialize-for-clipboard";
 
 
 /** Static obj for state */
 const State = {
     pos$: undefined as ResolvedPos | undefined,
 }
+
+
 
 /**
  * One caveat: 
@@ -76,7 +78,7 @@ export const DragHandle = new Plugin({
     }
 })
 
-function insertType(view: EditorView, event: MouseEvent) {
+function insertType(_: EditorView, __: MouseEvent) {
 
 }
 
@@ -98,7 +100,6 @@ function dragStart(view: EditorView, event: DragEvent) {
         slice = view.state.selection.content();
     }   
     
-    // @ts-expect-error View (global) is pulling from .d.ts file, the function below does so via the .ts file,
     // hence the mismatch 
     let {dom, text} = serializeForClipboard(view, slice)
 

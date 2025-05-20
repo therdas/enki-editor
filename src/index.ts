@@ -11,8 +11,6 @@ import { keymap } from "prosemirror-keymap"
 import { TableView } from "./enki-custom-schema/syntax-extensions/Table/TableView"
 import { data } from "./data"
 
-import "../style.sass"
-import "../style/index.scss"
 import { WikiLinkItemExtension } from "./enki-custom-schema/syntax-extensions/wiki-links/wikiLink"
 import { TaggableExtension } from "./enki-custom-schema/syntax-extensions/Taggable/taggable"
 import autocomplete from 'prosemirror-autocomplete'
@@ -21,9 +19,9 @@ import { AutocompleteAction, Options as ACO } from "prosemirror-autocomplete"
 import { TextDirectiveExtension, TextDirectiveView, ContainerDirectiveExtension, ContainerDirectiveView, LeafDirectiveExtension, LeafDirectiveView, setFragmentHandler } from './enki-custom-schema/syntax-extensions/directive'
 import { DragHandle } from "./enki-custom-schema/plugins/DragHandle"
 import { HtmlExtension } from "./enki-custom-schema/syntax-extensions/html/HtmlExtension"
-import { selectionSizePlugin } from "./enki-custom-schema/syntax-extensions/Table/TableNiceEditor"
 import { isNodeActive, menuPlugin } from "./enki-custom-schema/plugins/floater-menu"
 import { toggleMark } from "prosemirror-commands"
+import { URLSelector } from "./enki-custom-schema/plugins/floater-menu/url"
 
 const autocompleteOpts = {
     triggers: [
@@ -31,7 +29,7 @@ const autocompleteOpts = {
         { name: 'mention', trigger: '@' },
         { name: 'inserter', trigger: '/' },
     ],
-    reducer: (arg: AutocompleteAction): boolean => false,
+    reducer: (_: AutocompleteAction): boolean => false,
 }
 
 class EnkiEditor {
@@ -74,35 +72,34 @@ class EnkiEditor {
                         "Mod-y": redo,
                     }),
                     DragHandle,
-                    selectionSizePlugin,
                     menuPlugin([
                         {
                             command: toggleMark(this.pmu.schema().marks['strong']),
-                            text: 'bold',
+                            text: 'format_bold',
                             cls: ['material-icons'],
-                            predicate: (view) => view.state.selection.from != view.state.selection.to
+                            predicate: (view) => view.state.selection.from != view.state.selection.to && !isNodeActive(view.state, 'html')
                         },
                         {
                             command: toggleMark(this.pmu.schema().marks['em']),
-                            text: 'italics',
+                            text: 'format_italic',
                             cls: ['material-icons'],
-                            predicate: (view) => view.state.selection.from != view.state.selection.to
+                            predicate: (view) => view.state.selection.from != view.state.selection.to && !isNodeActive(view.state, 'html')
                         },
                         {
                             command: toggleMark(this.pmu.schema().marks['strikethrough']),
-                            text: 'strikethrough',
+                            text: 'strikethrough_s',
                             cls: ['material-icons'],
-                            predicate: (view) => view.state.selection.from != view.state.selection.to
+                            predicate: (view) => view.state.selection.from != view.state.selection.to && !isNodeActive(view.state, 'html')
                         },
                         {
-                            command: toggleMark(this.pmu.schema().marks['code']),
+                            command: URLSelector.openConvertDialog,
                             text: 'link',
                             cls: ['material-icons'],
-                            predicate: (view) => view.state.selection.from != view.state.selection.to
+                            predicate: (view) => view.state.selection.from != view.state.selection.to && !isNodeActive(view.state, 'html')
                         },
                         {
                             command: addRowAfter,
-                            text: 'addRow',
+                            text: 'add_row_below',
                             cls: ['material-icons'],
                             predicate: (view) => isNodeActive(view.state, 'table')
                         },

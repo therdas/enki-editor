@@ -6,11 +6,11 @@ import {renderGrouped, MenuElement} from "./menu"
 
 const prefix = "ProseMirror-menubar"
 
-function isIOS() {
-  if (typeof navigator == "undefined") return false
-  let agent = navigator.userAgent
-  return !/Edge\/\d/.test(agent) && /AppleWebKit/.test(agent) && /Mobile\/\w+/.test(agent)
-}
+// function isIOS() {
+//   if (typeof navigator == "undefined") return false
+//   let agent = navigator.userAgent
+//   return !/Edge\/\d/.test(agent) && /AppleWebKit/.test(agent) && /Mobile\/\w+/.test(agent)
+// }
 
 /// A plugin that will place a menu bar above the editor. Note that
 /// this involves wrapping the editor in an additional `<div>`.
@@ -81,7 +81,7 @@ class MenuBarView {
     }
     this.contentUpdate(this.editorView.state);
 
-    const cur = this.editorView.state.selection.$anchor;
+    // const _ = this.editorView.state.selection.$anchor;
     
     /* We handle this by the following logic :
         - If the element is a table cell -> select the entire table.
@@ -168,9 +168,9 @@ function findWrappingScrollable(node: Node) {
     if ((cur as HTMLElement).scrollHeight > (cur as HTMLElement).clientHeight) return cur as HTMLElement
 }
 
-function getAllWrapping(node: Node) {
-  let res: (Node | Window)[] = [node.ownerDocument!.defaultView || window]
-  for (let cur = node.parentNode; cur; cur = cur.parentNode)
-    res.push(cur)
-  return res
-}
+// function getAllWrapping(node: Node) {
+//   let res: (Node | Window)[] = [node.ownerDocument!.defaultView || window]
+//   for (let cur = node.parentNode; cur; cur = cur.parentNode)
+//     res.push(cur)
+//   return res
+// }

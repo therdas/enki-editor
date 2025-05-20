@@ -6,36 +6,31 @@ import { defaultOptions } from "mdast-util-taggable";
 import { InlineTaggableNode } from "mdast-util-taggable";
 import { MarkExtension } from "prosemirror-unified";
 import { Mark, MarkSpec, Schema, Node, DOMOutputSpec } from "prosemirror-model";
-import { InputRule } from "prosemirror-inputrules";
-import { EditorState, Transaction } from "prosemirror-state";
 
-enum Taggable{
-    Tag = 'tag',
-    Mention = 'mention',
-    Invalid = '',
-}
 
-function resolver(str: 'tag' | 'mention' | string): string {
-    if(str == 'tag' || str == 'mention')
-        return str as Taggable;
-    else
-        return '' as Taggable;
-}
+// function resolver(str: 'tag' | 'mention' | string): string {
+//     if(str == 'tag' || str == 'mention')
+//         return str as Taggable;
+//     else
+//         return '' as Taggable;
+// }
 
-function urlResolver(marker: string, val: string) {
-    let type = resolver(typeResolver(marker));
-    switch(type) {
-        case Taggable.Tag: return `/tags/${val}`
-        case Taggable.Mention: return `/user/${val}`
-        case Taggable.Invalid: return `/invalid/${val}`;
-    }
-}
+// function typeResolver(str: '@' | '#' | string): string {
+//     if(str == '@') return Taggable.Tag as string
+//     if(str == '#') return Taggable.Mention as string
+//     return Taggable.Invalid as string;
+// }
 
-function typeResolver(str: '@' | '#' | string): string {
-    if(str == '@') return Taggable.Tag as string
-    if(str == '#') return Taggable.Mention as string
-    return Taggable.Invalid as string;
-}
+// function urlResolver(marker: string, val: string) {
+//     let type = resolver(typeResolver(marker));
+//     switch(type) {
+//         case Taggable.Tag: return `/tags/${val}`
+//         case Taggable.Mention: return `/user/${val}`
+//         case Taggable.Invalid: return `/invalid/${val}`;
+//     }
+// }
+
+
 
 const opts = defaultOptions
 

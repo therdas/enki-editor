@@ -1,4 +1,4 @@
-import { Node, Nodes, PhrasingContent } from "mdast";
+import { Node, PhrasingContent } from "mdast";
 import { findAndReplace, ReplaceFunction } from "mdast-util-find-and-replace";
 
 const mention = "([a-z][0-9a-z\/]*)";
@@ -23,7 +23,7 @@ export function remarkTagged (
     let rules: Array<[RegExp, ReplaceFunction]> | undefined = undefined;
     for(let rule of opts.rules) {
         const regex = new RegExp(rule.marker + mention, flags);
-        const replaceFunction = (text: string, value: string): PhrasingContent => {
+        const replaceFunction = (_: string, value: string): PhrasingContent => {
             return {
                 type: 'link',
                 url: rule.rule(value),
