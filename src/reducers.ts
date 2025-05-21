@@ -1,7 +1,8 @@
 import { ActionKind, AutocompleteAction, FromTo } from "prosemirror-autocomplete";
 import { EditorView } from "prosemirror-view";
-import { canonicals, makeNode, NodeTypes,  } from "./node-types"
+import { canonicals, descriptions, makeNode, NodeTypes,  } from "./node-types"
 import { TextSelection } from "prosemirror-state";
+import { forEach } from "lodash";
 
 enum State {
     Open = 1,
@@ -22,61 +23,9 @@ export type CompletionOptions = {
     map: CompletionValues,
     canonical: [string, string][]
     mapping: (arg: string) => string;
+    descriptions?: [string, string][];
 }[];
 
-export const TestOptions: CompletionOptions = [
-    {
-        strict: true,
-        name: 'mention',
-        trigger: '@',
-        map: {
-            keys: [
-                ['therdas', 'Rahul Das'], ['git@therdas.dev', 'Rahul Das'], 
-                ['bidexd', 'Bideepto Bhattacharya'], ['bb@gmail.com', 'Bideepto Bhattacharya'],
-                ['vahuja', 'Vani Ahuja']
-            ],
-            values: [
-                ['Rahul Das', 'therdas'], 
-                ['Bideepto Bhattacharya', 'bidexd'],
-                ['Vani Ahuja', 'vahu']
-            ]
-        },
-        canonical: [
-            ['Rahul Das', 'therdas'],
-            ['Bideepto Bhattacharya', 'bidexd'],
-            ['Vani Ahuja', 'vahuja'],
-        ],
-        mapping: (val) => '/u/' + val
-    },
-    {
-        name: 'hashtag',
-            strict: true,
-        trigger: '#',
-        map: {
-            keys: [
-                ['Main Page', 'mainpageID'],
-                ['Contents', 'contents']
-            ],
-            values: [
-                ['Main Page', '/p/mainpage'],
-                ['Contents', '/t/content']
-            ]
-        },
-        canonical: [
-            ['Main Page', 'mainpageID'],
-            ['Contents', 'contents']
-        ],
-        mapping: (val) => '/tags/' + val
-    },
-    {
-        name: 'inserter',
-        trigger: '/',
-        map: NodeTypes,
-        canonical: canonicals,
-        strict: true,
-        mapping: (val) => val,
-    }
-]
 
 export class SuggestionsManager {
     private view: EditorView | undefined
@@ -86,8 +35,6 @@ export class SuggestionsManager {
     private container: HTMLElement;
     private state = State.Closed;
 
-    // Redone
-    // name -> keys and values
     private values = new Map<string, Map<string, string>> ();
     private mapping = new Map<string, (arg: string) => string>();
     private suggestions = new Map<string, [string, string][]>();
@@ -95,15 +42,22 @@ export class SuggestionsManager {
     private filtered: [string, string][] = [];
     private keyed: string = '';
 
+    private descriptions = new Map<string, string>();
+
     constructor(private options: CompletionOptions = TestOptions) {
         this.container = document.createElement('div');
         document.body.appendChild(this.container);
+        this.container.classList.add('suggestions-manager');
 
 
         for(let option of options) {
             this.refreshSuggestions(option.name, option.map);
             this.mapping.set(option.name, option.mapping);
             this.suggestions.set(option.name, option.canonical);
+
+            if(option.descriptions) {
+                forEach(option.descriptions, (val: [string, string]) => this.descriptions.set(val[0], val[1]))
+            }
         }
     }
 
@@ -173,13 +127,17 @@ export class SuggestionsManager {
 
     buildView() {
         const parent = document.createElement('div');
-        parent.classList.add('suggestions', 'list');
+        parent.classList.add('suggestions-list');
+
+        let index = 0;
 
         for (const suggestion of this.filtered) {
+            let in_indx = index + 0;
             const child = document.createElement('div');
             let title = document.createElement('span');
-            let description = document.createElement('div');
-            [title.textContent, description.textContent] = suggestion;
+            let description = document.createElement('span');
+            title.textContent = suggestion[0];
+            description.textContent = this.descriptions.get(suggestion[1]) ?? '';
             child.classList.add('item');
             child.append(title, description);
             parent.append(child);
@@ -188,15 +146,11 @@ export class SuggestionsManager {
                 if (!this.view || !this.range)
                     return;
 
-                if (this.index < 0 || this.index >= this.filtered.length)
-                    return;
+                this.index = in_indx;
 
-                const tr = this.view.state.tr
-                    .deleteRange(this.range.from, this.range.to)
-                    .insertText(
-                        this.mapping.get(this.keyed)!(suggestion[1])
-                    )
-                this.view.dispatch(tr)
+                console.log(">",this.index, this.filtered);
+
+                this.fire();
                 this.view.focus()
 
                 this.state = State.Closed;
@@ -204,6 +158,8 @@ export class SuggestionsManager {
 
                 e.stopPropagation()
             })
+
+            ++index;
         }
 
         return parent;
@@ -228,8 +184,19 @@ export class SuggestionsManager {
             this.updateSelection();
 
             const rect = document.getElementsByClassName('autocomplete')[0].getBoundingClientRect();
+            // Calculate bottom
+            let bottom = rect.bottom;
+            if(rect.top < window.innerHeight / 2) {
+                bottom = window.scrollY + rect.bottom - Math.floor(parseFloat(getComputedStyle(document.getElementsByClassName('autocomplete')[0].parentElement as HTMLElement).marginBottom))
+                console.log(Math.floor(parseFloat(getComputedStyle(document.getElementsByClassName('autocomplete')[0].parentElement as HTMLElement).marginBottom)))
+            } else {
+                bottom = window.scrollY + rect.top - Math.floor(window.innerHeight / 3 + parseFloat(getComputedStyle(document.body).fontSize));
+            }
+
+            this.picker.style.height = Math.floor(window.innerHeight / 3 ) + 'px';
+
             if (rect)
-                [this.picker.style.top, this.picker.style.left] = [rect.bottom + window.scrollY + 'px', rect.left + 'px']
+                [this.picker.style.top, this.picker.style.left] = [bottom + 'px', rect.left + 'px']
         }
     }
 
@@ -238,55 +205,65 @@ export class SuggestionsManager {
 
         [...this.picker.children].forEach(elem => elem.classList.remove('selected'))
 
-        if (this.index >= 0 && this.index < this.filtered.length)
+        if (this.index >= 0 && this.index < this.filtered.length){
             this.picker.children[this.index].classList.add('selected');
+            // Position
+            let elem = this.picker.children[this.index] as HTMLElement;
+            let height = elem.offsetTop - elem.offsetHeight * 3;
+            height = height < 0 ? 0 : height;
+            console.log(elem, elem.offsetTop);
+            this.picker.scrollTop = height; 
+        }
     }
 
     fire() {
         if (!this.view || !this.range)
             return;
+        try {
+            if (this.keyed == 'mention' || this.keyed == 'hashtag') {
 
-        if (this.keyed == 'mention' || this.keyed == 'hashtag') {
+                console.log("KEYED", this.keyed)
+                const marker = this.keyed == 'mention' ? '@' : '#';
+                const type = this.keyed == 'mention' ? 'mention' : 'tag';
 
-            console.log("KEYED", this.keyed)
-            const marker = this.keyed == 'mention' ? '@' : '#';
-            const type = this.keyed == 'mention' ? 'mention' : 'tag';
-
-            const tr = this.view.state.tr
-                .deleteRange(this.range.from, this.range.to)
-                .insert(
-                    this.range.from,
-                    this.view.state.schema.text(
-                        marker + this.filtered[this.index][0],
-                        [
-                            this.view.state.schema.marks['taggable'].create({
-                                href: this.mapping.get(this.keyed)!(this.filtered[this.index][1]),
-                                'efm-taggable-marker': marker,
-                                'efm-taggable-type': type,
-                            })
-                        ]
+                const tr = this.view.state.tr
+                    .deleteRange(this.range.from, this.range.to)
+                    .insert(
+                        this.range.from,
+                        this.view.state.schema.text(
+                            marker + this.filtered[this.index][0],
+                            [
+                                this.view.state.schema.marks['taggable'].create({
+                                    href: this.mapping.get(this.keyed)!(this.filtered[this.index][1]),
+                                    'efm-taggable-marker': marker,
+                                    'efm-taggable-type': type,
+                                })
+                            ]
+                        )
                     )
-                )
-            this.view.dispatch(tr);
-        } else if(this.keyed == 'inserter') {
-            const replaceWith = makeNode(this.filtered[this.index][1], this.view.state.schema);
-            
-            if(replaceWith == undefined)
-                return false;
+                this.view.dispatch(tr);
+            } else if(this.keyed == 'inserter') {
+                const replaceWith = makeNode(this.filtered[this.index][1], this.view.state.schema);
+                
+                if(replaceWith == undefined)
+                    return false;
 
-            const tr = this.view.state.tr;
+                const tr = this.view.state.tr;
 
-            tr.replaceRangeWith(this.range.from - 1, this.range.to, replaceWith[0])
-              .setSelection(
-                new TextSelection(
-                    tr.doc.resolve(this.range.from + replaceWith[1]), 
-                )
-            );
+                tr.replaceRangeWith(this.range.from - 1, this.range.to + 1, replaceWith[0])
+                .setSelection(
+                    new TextSelection(
+                        tr.doc.resolve(this.range.from + replaceWith[1]), 
+                    )
+                );
 
-            this.view.dispatch(tr);
+                this.view.dispatch(tr);
+            }
+
+            this.setState(State.Closed);
+        } catch(err) {
+            console.log("Rec'd error", err);
         }
-
-        this.setState(State.Closed);
     }
 
     public reducer(action: AutocompleteAction): boolean {
@@ -319,3 +296,47 @@ export class SuggestionsManager {
         }
     }
 }
+
+const TestOptions: CompletionOptions = [
+    {
+        name: 'hashtag',
+            strict: true,
+        trigger: '#',
+        map: {
+            keys: [
+                ['Main Page', 'mainpageID'],
+                ['Contents', 'contents']
+            ],
+            values: [
+                ['Main Page', '/p/mainpage'],
+                ['Contents', '/t/content']
+            ]
+        },
+        canonical: [
+            ['Main Page', 'mainpageID'],
+            ['Contents', 'contents']
+        ],
+        mapping: (val) => '/tags/' + val
+    },
+    {
+        name: 'inserter',
+        trigger: '/',
+        map: NodeTypes,
+        canonical: canonicals,
+        strict: true,
+        mapping: (val) => val,
+        descriptions: descriptions
+    }
+]
+
+const manager = new SuggestionsManager(TestOptions);
+
+export const testAutocompleteOpts = {
+    triggers: [
+        { name: 'hashtag', trigger: '#' },
+        { name: 'mention', trigger: '@' },
+        { name: 'inserter', trigger: '/' },
+    ],
+    reducer: manager.reducer.bind(manager),
+}
+

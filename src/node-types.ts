@@ -20,8 +20,6 @@ export const NodeTypes: CompletionValues = {
         ['Heading 2', 'heading2'],
         ['Heading 3', 'heading3'],
         ['Heading 4', 'heading4'],
-        ['Heading 5', 'heading5'],
-        ['Heading 6', 'heading6'],
         ['#', 'heading1'],
         ['##', 'heading2'],
         ['###', 'heading3'],
@@ -45,13 +43,24 @@ export const canonicals: [string, string][] = [
     ['Heading 2', 'heading2'],
     ['Heading 3', 'heading3'],
     ['Heading 4', 'heading4'],
-    ['Heading 5', 'heading5'],
-    ['Heading 6', 'heading6'],
     ['Table', 'table'],
     ['To Do', 'task_list_item'],
     ['Bulleted List', 'bullet_list'],
     ['Numbered List', 'ordered_list'],
     ['Raw HTML', 'html'],
+]
+
+export const descriptions: [string, string][] = [
+    ['paragraph', '↵↵'],
+    ['blockquote', '>'],
+    ['code', '```'],
+    ['heading1', '#'],
+    ['heading2', '##'],
+    ['heading3', '###'],
+    ['heading4', '####'],
+    ['task_list_item', '- []'],
+    ['bullet_list', '-'],
+    ['numbered list', '1.']
 ]
 
 export function makeNode(type: string, schema: Schema): [PMNode, number, number] | undefined {
@@ -96,10 +105,10 @@ export function makeNode(type: string, schema: Schema): [PMNode, number, number]
             node_type.create(
                 {},
                 [
-                    schema.nodes['paragraph'].create({}, schema.nodes['paragraph'].createAndFill({}, schema.text(' '))),
+                    schema.nodes['paragraph'].create({}, schema.text(' ')),
                 ]
             ),
-            1, 0
+            2, 0
         ]
     } else if (type === 'paragraph') {
         return [

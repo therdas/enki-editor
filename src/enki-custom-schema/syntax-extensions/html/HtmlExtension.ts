@@ -14,10 +14,10 @@ export class HtmlViewExtension implements NodeView {
     text: HTMLElement | null;
 
     constructor(public node: PMNode, public outerView: EditorView, public getPos: () => number | undefined) {
-        this.dom = document.createElement('div');
+        this.dom = document.createElement('span');
         this.dom.classList.add('prosemirror-html-embed');
 
-        this.renderer = this.dom.appendChild(document.createElement('div'));
+        this.renderer = this.dom.appendChild(document.createElement('span'));
         this.renderer.classList.add('prosemirror-unsafe');
         this.renderer.innerHTML = this.node.textContent;
 
@@ -42,17 +42,17 @@ export class HtmlViewExtension implements NodeView {
 
         this.editor = document.body.appendChild(document.createElement('div'));
 
-        this.editor.classList.add('prosemirror-html-editor');
+        this.editor.classList.add('prosemirror-inline-editor');
 
         this.text = this.editor.appendChild(document.createElement('code'));
         this.text.contentEditable = "true";
         this.text.innerHTML = highlight(this.node.textContent, languages.html, 'html');
         this.text.classList.add('language-html', 'language-js', 'language-css');
 
-        let done = this.editor.appendChild(document.createElement('done'));
+        let done = this.editor.appendChild(document.createElement('span'));
         done.addEventListener('click', this.sync.bind(this, this.text));
-        done.classList.add('font-icon');
-        done.textContent = '✓'
+        done.classList.add('material-icon');
+        done.textContent = 'keyboard_return';
         
         let pos = (this.outerView.domAtPos(this.outerView.state.selection.from).node as HTMLElement).getBoundingClientRect();
         
@@ -130,4 +130,35 @@ export class HtmlExtension extends NodeExtension <Html> {
     public override unifiedInitializationHook(processor: Processor<Node, Node, Node, Node, string>): Processor<Node, Node, Node, Node, string> {
         return processor.use(remarkFixRootHTML).use(remarkCombineHTMLTagPairs)
     }
+}
+//https://stackoverflow.com/questions/3972014/get-contenteditable-caret-position
+function getCaretPosition(editableDiv: HTMLElement): number {
+  var caretPos = 0,
+    sel, range;
+  if (window.getSelection) {
+    sel = window.getSelection();
+    if(sel == null) return -1;
+    if (sel.rangeCount) {
+      range = sel.getRangeAt(0);
+      if (range.commonAncestorContainer.parentNode == editableDiv) {
+        caretPos = range.endOffset;
+      }
+    }
+  }
+  return caretPos;
+}
+
+function setCaret(node: HTMLElement, pos: number) {
+    var el = document.getElementById("editable")
+    var range = document.createRange()
+    var sel = window.getSelection()
+    
+    if(el == null || sel == null)
+        return;
+
+    range.setStart(el.childNodes[2], 5)
+    range.collapse(true)
+    
+    sel.removeAllRanges()
+    sel.addRange(range)
 }

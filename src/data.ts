@@ -1,6 +1,10 @@
 export const data = `eyyo 
 hi <boy>no</boy> oea
 
+$$
+a^2
+$$
+
 \`\`\`C
 #include <stdio.h>
 #include <stdlib.h>

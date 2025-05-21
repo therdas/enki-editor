@@ -5,11 +5,15 @@ import { findContainerParent } from "./utils";
 
 export class URLSelector {
 
+    public static focus = 0;
+
     //TODO Delete test data
     public static items = new Map<string, string>(
         [
             ['hey', '/p/hey'],
-            ['bye!', '/p/bye']
+            ['bye!', '/p/bye'],
+            ['hello!', 'p/hello'],
+            ['balls', '/p/ball']
         ]
     );
     public static open = false;
@@ -27,14 +31,20 @@ export class URLSelector {
     }
 
     public static openConvertDialog(state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView): boolean {
-        console.log("Opening");
+        URLSelector.focus = -1;
+
+        let opts: HTMLOptionElement[] = [];
+
         const container = document.createElement('div');
         URLSelector.container = container;
         container.classList.add('prosemirror-url-selector');
 
         const searchField = document.createElement('input');
         searchField.type = 'text';
-        searchField.setAttribute('list', 'url-selector-list');
+        searchField.setAttribute('list', '');
+        searchField.setAttribute('name', 'url-selector-list');
+        searchField.setAttribute('role', 'combobox');
+        searchField.setAttribute('autocomplete', 'off');
         container.appendChild(searchField);
 
         // Position
@@ -47,6 +57,10 @@ export class URLSelector {
             container.style.left = rect.left + 'px';
         }
 
+        let done = container.appendChild(document.createElement('span'));
+        done.classList.add('material-icon');
+        done.textContent = 'keyboard_return'
+
         const dataList = document.createElement('datalist');
         dataList.id = 'url-selector-list'
 
@@ -55,19 +69,96 @@ export class URLSelector {
             opt.textContent = item[0];
             opt.value = item[1];
             dataList.append(opt);
-            console.log("Appended", opt, "tp", dataList)
+            console.log("Appended", opt, "tp", dataList);
+            opt.addEventListener('click', (e) => searchField.value = opt.value);
+
+            opts.push(opt);
         }
 
         container.appendChild(dataList);
         document.body.appendChild(container);
-        console.log("Appending", container);
+
+        function arrowhandler(evt: KeyboardEvent) {
+            let sentinel = URLSelector.focus == -1 ? 0 : URLSelector.focus;
+
+            if(evt.key == "ArrowDown") {
+                if(URLSelector.focus !== -1 && URLSelector.focus <= opts.length){
+                    opts[URLSelector.focus].classList.remove('active');
+                }
+
+                do {
+                    URLSelector.focus++;
+                    if(URLSelector.focus >= opts.length)
+                        URLSelector.focus = 0;
+                    console.log(sentinel, ":::", URLSelector.focus)
+                } while (
+                    opts[URLSelector.focus].classList.contains('hidden') && 
+                    URLSelector.focus != sentinel
+                )
+                
+
+                opts[URLSelector.focus].classList.add('active');
+            } else if(evt.key == "ArrowUp") {
+                if(URLSelector.focus !== -1)
+                    opts[URLSelector.focus].classList.remove('active');
+
+                do {
+                    -- URLSelector.focus;
+                    if(URLSelector.focus < 0)
+                        URLSelector.focus = opts.length - 1;
+                } while (
+                    opts[URLSelector.focus].classList.contains('hidden') &&
+                    URLSelector.focus !== sentinel
+                )
+
+                opts[URLSelector.focus].classList.add('active');
+            }
+        }
+
+        searchField.addEventListener('keydown', arrowhandler)
 
         function destroy() {
             clear(container);
         }
 
-        function fire(event: KeyboardEvent) {
-            if (event.key == "Enter") {
+        function filter(_: Event) {
+            //add current to the end of the list as the custom url. Include custom class
+            let url = document.createElement('option');
+            url.className = ('custom-url');
+            url.textContent = 'External Link ↵';
+            url.value = searchField.value;
+            url.addEventListener('click', (e) => searchField.value = url.value);
+
+            for(let child of dataList.children) {
+                let elem = child as HTMLOptionElement;
+
+                if(elem.classList.contains('custom-url'))
+                    dataList.removeChild(child);
+            }
+
+            dataList.insertBefore(url, dataList.firstChild);
+
+
+            for(let elem of opts) {
+                if(
+                    ! (
+                        ( elem.value.includes (searchField.value ))|| 
+                        ( elem.textContent?.includes (searchField.value) ?? false)
+                    )
+                ) {
+                    elem.classList.add('hidden');
+                } else {
+                    if(elem.classList.contains('hidden'))
+                        elem.classList.remove('hidden');
+                }
+            }
+        }
+
+        function fire(event: KeyboardEvent | MouseEvent) {
+            if ( 
+                event instanceof KeyboardEvent && event.key == "Enter" ||
+                event instanceof MouseEvent && true
+            ) {
 
                 let url = URLSelector.items.get(searchField.value);
                 if (url == undefined)
@@ -86,6 +177,8 @@ export class URLSelector {
 
         searchField.addEventListener('focusout', destroy);
         searchField.addEventListener('keydown', fire);
+        searchField.addEventListener('input', filter);
+        done.addEventListener('click', fire);
         return true;
     }
 }

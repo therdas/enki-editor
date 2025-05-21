@@ -1,10 +1,12 @@
 import { Command, Plugin } from "prosemirror-state";
 import { EditorView } from "prosemirror-view";
 import { findContainerParent } from "./utils";
+import { textblockTypeInputRule } from "prosemirror-inputrules";
 
 export interface MenuItem {
     command: Command,
-    text: string,
+    textIcon: string,
+    label?: string,
     cls: string[],
     predicate: (view: EditorView) => boolean
 }
@@ -13,27 +15,36 @@ interface CMenuItem extends MenuItem {
     _dom: HTMLElement | undefined;
 }
 
-function createDOM(text: string, cls: string[]) {
+function createDOM(text: string, cls: string[], label?: string) {
+    const container = document.createElement('span');
     const elem = document.createElement('span');
+
     elem.textContent = text;
     elem.classList.add(...cls);
-    return elem;
+
+    container.appendChild(elem);
+    if(label) {
+        let lbl = container.appendChild(document.createElement('span'));
+        lbl.textContent = label;
+    }
+    return container;
 }
- 
+
+
 export class MenuView {
     public dom: HTMLElement;
-    public items: CMenuItem[];
+    public items: CMenuItem[] = [];
     constructor(items: MenuItem[], public editorView: EditorView) {
         this.dom = document.createElement('div');
         this.dom.classList.add('menubar');
 
-        this.items = items.map(({command, text, cls, predicate}) => {
+        this.items = items.map(({command, textIcon, label, cls, predicate}) => {
             return {   
                 command, 
-                text, 
+                textIcon, 
                 cls,
                 predicate,
-                _dom: createDOM(text, cls)
+                _dom: createDOM(textIcon, cls, label)
             }
         });
         this.items.forEach(({_dom}) => this.dom.appendChild(_dom!))

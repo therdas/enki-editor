@@ -24,37 +24,37 @@ export function resolve(arg: string) {
 }
 
 export class WikiLinkItemExtension extends MarkExtension<WikiLink> {
-    public override proseMirrorInputRules(proseMirrorSchema: Schema<string, string>): Array<InputRule> {
-        return [
-            new InputRule(
-                /\[\[[^\[\]]*\]\]$/,
-                (state, match, start, end): Transaction => {
-                    let alias = '';
-                    let url = '';
+    // public override proseMirrorInputRules(proseMirrorSchema: Schema<string, string>): Array<InputRule> {
+    //     return [
+    //         new InputRule(
+    //             /\[\[[^\[\]]*\]\]$/,
+    //             (state, match, start, end): Transaction => {
+    //                 let alias = '';
+    //                 let url = '';
 
-                    let marks: Mark[] = [];
-                    state.doc.nodesBetween(start, end, (node) => {
-                        marks.push(...node.marks);
-                    })
+    //                 let marks: Mark[] = [];
+    //                 state.doc.nodesBetween(start, end, (node) => {
+    //                     marks.push(...node.marks);
+    //                 })
 
-                    if(match[0].indexOf('|') !== -1) {
-                        let t = match[0].split('|')
-                        url = resolve(t.shift()?.slice(2).trim() ?? '');
-                        alias = t.join('').slice(0, -2).trim();
-                        if(alias.length === 0) alias = url
-                    } else {
-                        alias = match[0].slice(2, -2)
-                        url = resolve(match[0].slice(2, -2))
-                    }
+    //                 if(match[0].indexOf('|') !== -1) {
+    //                     let t = match[0].split('|')
+    //                     url = resolve(t.shift()?.slice(2).trim() ?? '');
+    //                     alias = t.join('').slice(0, -2).trim();
+    //                     if(alias.length === 0) alias = url
+    //                 } else {
+    //                     alias = match[0].slice(2, -2)
+    //                     url = resolve(match[0].slice(2, -2))
+    //                 }
 
-                    return state.tr.insertText(alias, start, end)
-                        .addMark(start, end, proseMirrorSchema.marks[this.proseMirrorMarkName()].create({
-                            href: url,
-                        }))
-                }
-            )
-        ]
-    }
+    //                 return state.tr.insertText(alias, start, end)
+    //                     .addMark(start, end - 3, proseMirrorSchema.marks[this.proseMirrorMarkName()].create({
+    //                         href: url,
+    //                     }))
+    //             }
+    //         )
+    //     ]
+    // }
 
     public proseMirrorKeymap(proseMirrorSchema: Schema<string, string>): Record<string, Command> {
         return {

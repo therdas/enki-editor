@@ -1,37 +1,178 @@
 @use './colors.scss';
 
-@font-face {
-    font-family: 'MaterialIcons';
-      font-style: normal;
-  font-weight: 400;
-    src: url('../src/fonts/MaterialSymbolsOutlined.ttf');
-}
-
-.menubar{
-  transform: translateY(-2.3em);
+.menubar {
+  transform: translateY(-4em);
   display: flex;
   flex-direction: row;
   position: absolute;
-  background-color: var(--container-background);
-  padding: 0.6em;
-  border-radius: 4px;
+  background-color: var(--popup-background);
   z-index: 100;
-  box-shadow: 0 2px 3px rgba($color: #000000, $alpha: 0.2), 0 0 5px rgba($color: #000000, $alpha: 0.1);
+  border: 2px solid var(--popup-border);
+  box-shadow: 3px 3px 0 var(--popup-border);
+  background-color: var(--popup-background);
 
   span {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    cursor: default;
+    
+    &:hover {
+      background-color: var(--accent);
+      color: var(--accent-text);
+    }
+  }
+
+  span > span:last-child {
+    padding: 0.4em;
+    padding-left: 0;
+  }
+
+  span > span:first-child {
     font-family: 'MaterialIcons';
     display: block;
-    padding: 0 0.35em;
-    cursor: default;
+    padding: 0.5em 0.5em;
   }
 }
 
-.prosemirror-url-selector {
+.prosemirror-url-selector, .prosemirror-inline-editor {
   position: absolute;
   top: 0;
   left: 0;
-  display: block;
-  width: 10em;
-  height: 10em;
-  background-color: yellow;
+  display: flex;
+  width: 25em;
+  min-height: 2.8em;
+  background-color: var(--popup-background);
+  border: 2px solid var(--popup-border);
+
+  box-shadow: 3px 3px 0 var(--popup-border);
+
+  code {
+    padding: 0.6em;
+    flex-grow: 2;
+    border-radius: 0;
+    outline: none;
+    border: none;
+  }
+
+  input {
+    outline: none;
+    background-color: var(--popup-darker-background);
+    font-family: inherit;
+    font-size: inherit;
+    border: none;
+    flex-grow: 1;
+    padding-left: 0.6em;
+  }
+
+  & > span:last-child, & > span.material-icon {
+    display: block;
+    padding: 0.6em 0.65em;
+
+    &:hover {
+      background-color: var(--accent);
+      cursor: default;
+    }
+  }
+
+  datalist {
+    display: block;
+    background-color: var(--popup-background);
+    border: 2px solid var(--popup-border);
+    width: 25em;
+    box-sizing: border-box;
+    position: absolute;
+    top: 3.1em;
+    left: -2px;
+    box-shadow: 3px 3px 0 var(--popup-border);
+  }
+
+  option {
+    background-color: white;
+    color: black;
+    padding: 0.2em 0.4em;
+    transition: all 0.05s ease-in-out;
+
+    &.active {
+      background-color: var(--accent);
+    }
+
+    &.hidden {
+      display: none;
+    }
+
+    &::after {
+      margin-left: 0.5em;
+      opacity: 0.3;
+      content: attr(value)
+    }
+  }
 }
+
+
+
+
+
+.suggestions-manager {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+// Selector
+.suggestions-list {
+  display: block;
+  position: absolute;
+  background-color: var(--container-background);
+  border-radius: 6px;
+  border: 1px solid var(--container-border);
+  z-index: 100;
+  overflow-y: scroll;
+  min-width: 400px;
+  box-shadow:  0 3px 5px rgba($color: #000000, $alpha: 0.1),0 0px 10px rgba($color: #000000, $alpha: 0.05);
+
+
+  & > .item {
+    display: flex;
+    flex-direction: row;
+    
+    span:first-child {
+      padding: 0.5em 0.6em;
+      flex-grow: 2;
+    }
+
+    span:last-child {
+      padding: 0.5em;
+      flex-grow: 0;
+    }
+  }
+
+  &:hover .selected {
+    background-color: var(--accent);
+  }
+
+  &:hover > div:hover,
+  & .selected {
+    background-color: var(--accent);
+    cursor: pointer;
+    height: auto;
+  }
+}
+
+.autocomplete {
+  color: var(--accent-text);
+  font-weight: bolder;
+  // border: 1px solid #333;
+  border-radius: 2px 2px 0 0;
+  border-bottom-color: white;
+  padding: 2px 5px;
+}
+
+#info {
+  margin-top: 1em;
+  background-color: transparent;
+  min-height: 1.5em;
+  display: block;
+}
+
+

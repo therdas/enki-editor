@@ -5,12 +5,23 @@
 @use './prosemirror-gapcursor.scss';
 @use './views.scss';
 @use './colors.scss';
+@use './katex.scss';
 
 body {
   background-color: var(--background);
+  font-family: sans-serif;
+}
+
+a {
+  text-decoration: underline;
+  color: var(--accent-text);
+  text-decoration-skip-ink: auto;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
 }
 
 .ProseMirror {
+  outline: none;
   font-family: sans-serif;
 
   .tableWrapper {
