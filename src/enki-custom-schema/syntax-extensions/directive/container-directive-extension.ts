@@ -5,45 +5,8 @@ import { ContainerDirective, } from "mdast-util-directive"
 import { Processor } from "unified";
 import remarkDirective from "remark-directive";
 import { BlockContent } from "mdast";
-import { EditorView, NodeView } from "prosemirror-view";
-
-export class ContainerDirectiveView implements NodeView {
-    dom: HTMLElement;
-    contentDOM: HTMLElement;
-    pluginDOM: HTMLElement;         // Element wrapping around contentDOM
-    static fragmentHandlers = new Map<string, (arg: Record<string, string>) => [HTMLElement, HTMLElement, HTMLElement]>();
-
-    constructor(public node: PMNode, public outerView: EditorView, public getPos: () => number | undefined) {
-        let res = ContainerDirectiveView.fragmentHandlers.get(node.attrs.name)?.
-            call(null, { name: node.attrs.name, type: node.attrs.type, ...node.attrs.attrs })
-            ?? this.createFallback(node);
-
-        this.dom = res[0];
-        this.dom.classList.add('md-directive-container', 'plugin');
-
-        this.pluginDOM = res[1];
-        this.dom.appendChild(this.pluginDOM);
-
-        this.contentDOM = res[2];
-        this.dom.appendChild(this.contentDOM);
-    }
-
-    createFallback(node: PMNode): [HTMLElement, HTMLElement, HTMLElement] {
-        let res = document.createElement('div');
-        let mesg = res.appendChild(document.createElement('div'));
-        mesg.textContent = `This view ({type: container, name: ${node.attrs.name}}) is not handled properly, maybe a plugin is missing?\n`;
-        mesg.contentEditable = 'false'
-        return [document.createElement('div'), res, document.createElement('div')];
-    }
-
-    static addFragmentHandlers(name: string, func: (arg: Record<string, string>) => [HTMLElement, HTMLElement, HTMLElement]) {
-        ContainerDirectiveView.fragmentHandlers.set(name, func);
-    }
-
-    static clearFragmentHandlers() {
-        ContainerDirectiveView.fragmentHandlers.clear();
-    }
-}
+import { NodeViewConstructor } from "prosemirror-view";
+import { DirectiveView } from "./directive-view";
 
 export class ContainerDirectiveExtension extends NodeExtension
     <ContainerDirective> {
@@ -113,4 +76,8 @@ export class ContainerDirectiveExtension extends NodeExtension
     unifiedInitializationHook(processor: Processor<UnistNode, UnistNode, UnistNode, UnistNode, string>): Processor<UnistNode, UnistNode, UnistNode, UnistNode, string> {
         return processor.use(remarkDirective);
     }
+
+    proseMirrorNodeView(): NodeViewConstructor  {
+        return (node, view, getPos) => new DirectiveView(node, view, getPos); 
+    }  
 }

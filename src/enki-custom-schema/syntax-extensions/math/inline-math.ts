@@ -61,11 +61,11 @@ export class InlineMathExtension extends NodeExtension<InlineMath> {
             atom: true,
             marks: '',
             toDOM(node: PMNode): DOMOutputSpec {
-                return ["pre", 0]
+                return ["code", 0]
             },
             parseDOM: [
                 {
-                    tag: 'pre',
+                    tag: 'code',
                     getAttrs(dom: HTMLElement): {
                         class: string | null
                     } {

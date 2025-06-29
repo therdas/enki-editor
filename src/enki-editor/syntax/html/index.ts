@@ -1,0 +1,1 @@
+export { HtmlExtension } from "./extension"

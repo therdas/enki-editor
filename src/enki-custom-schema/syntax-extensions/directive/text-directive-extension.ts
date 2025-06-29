@@ -5,44 +5,8 @@ import { TextDirective } from "mdast-util-directive"
 import { Processor } from "unified";
 import remarkDirective from "remark-directive"; 
 import { PhrasingContent } from "mdast";
-import { EditorView, NodeView } from "prosemirror-view";
-
-export class TextDirectiveView implements NodeView {
-    dom: HTMLElement;
-    contentDOM?: HTMLElement | null | undefined;
-    pluginDOM?: HTMLElement | undefined;
-    header?: HTMLElement;
-    static fragmentHandlers = new Map<string, (arg: Record<string, string>) => [HTMLElement, HTMLElement, HTMLElement]>();
-
-    constructor(public node: PMNode, public outerView: EditorView, public getPos: () => number | undefined) {
-        let res = TextDirectiveView.fragmentHandlers.get(node.attrs.name)?.call(null, {name: node.attrs.name, type: node.attrs.type, ...node.attrs.attrs}) ?? this.createFallback(node);
-        
-        this.dom = res[0];
-        this.dom.classList.add('md-directive-container', 'plugin');
-        
-        this.pluginDOM = res[1];
-        this.dom.appendChild(this.pluginDOM);
-
-        this.contentDOM = res[2];
-        this.dom.appendChild(this.contentDOM);
-    }
-
-    createFallback(node: PMNode) {
-        let res = document.createElement('span');
-        let mesg = res.appendChild(document.createElement('span'));
-        mesg.textContent = `This view is not handled properly, maybe a plugin is missing?\nType: ${node.attrs.type}, \nAttributes: ${JSON.stringify(node.attrs.attrs)}`;
-        mesg.contentEditable = 'false'
-        return [document.createElement('div'), res, document.createElement('div')];
-    }
-
-    static addFragmentHandlers(name: string, func: (arg: Record<string, string>) => [HTMLElement, HTMLElement, HTMLElement]) {
-        TextDirectiveView.fragmentHandlers.set(name, func);
-    }
-
-    static clearFragmentHandlers() {
-        TextDirectiveView.fragmentHandlers.clear();
-    }
-}
+import { NodeViewConstructor } from "prosemirror-view";
+import { DirectiveView } from "./directive-view";
 
 export class TextDirectiveExtension extends NodeExtension 
 <TextDirective> {
@@ -108,4 +72,8 @@ export class TextDirectiveExtension extends NodeExtension
     unifiedInitializationHook(processor: Processor<UnistNode, UnistNode, UnistNode, UnistNode, string>): Processor<UnistNode, UnistNode, UnistNode, UnistNode, string> {
         return processor.use(remarkDirective);
     }
+
+    proseMirrorNodeView(): NodeViewConstructor  {
+            return (node, view, getPos) => new DirectiveView(node, view, getPos); 
+        }
 }

@@ -5,16 +5,16 @@ $accent-complement: #102E50;
 $accent: #F5C45E;
 
 [data-theme="light"] {
-    --background: z;
-    --container-background: #{$light-gray};
-    --container-border: #bdbdbd;
+  --background: #fbfbfb;
+  --container-background: #f4f4f4;
+  --container-border: #2f2f2f;
+  --accent: #4488ff;
+  --accent-text: #fff;
     --popup-background: #{$light-white};
     --popup-darker-background: #{$light-gray};
     --popup-border: #102E50;
     --table-border: #bfbfbf;
     --background-control-highlight: #dedede;
-    --accent: #F5C45E;
-    --accent-text: $accent-complement;
     --palette: #102E50 #F5C45E #E78B48 #BE3D2A;
 }
 

@@ -1,7 +1,6 @@
 import { Command, Plugin } from "prosemirror-state";
 import { EditorView } from "prosemirror-view";
 import { findContainerParent } from "./utils";
-import { textblockTypeInputRule } from "prosemirror-inputrules";
 
 export interface MenuItem {
     command: Command,

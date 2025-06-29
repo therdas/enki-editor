@@ -70,7 +70,7 @@ export class URLSelector {
             opt.value = item[1];
             dataList.append(opt);
             console.log("Appended", opt, "tp", dataList);
-            opt.addEventListener('click', (e) => searchField.value = opt.value);
+            opt.addEventListener('click', (_) => searchField.value = opt.value);
 
             opts.push(opt);
         }
@@ -127,7 +127,7 @@ export class URLSelector {
             url.className = ('custom-url');
             url.textContent = 'External Link ↵';
             url.value = searchField.value;
-            url.addEventListener('click', (e) => searchField.value = url.value);
+            url.addEventListener('click', (_) => searchField.value = url.value);
 
             for(let child of dataList.children) {
                 let elem = child as HTMLOptionElement;

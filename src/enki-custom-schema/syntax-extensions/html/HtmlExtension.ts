@@ -5,13 +5,22 @@ import { remarkFixRootHTML, remarkCombineHTMLTagPairs }  from "../../plugins/htm
 import { Processor } from "unified";
 import { Node } from "unist";
 import { EditorView, NodeView, NodeViewConstructor } from "prosemirror-view";
-import { highlight, languages,  } from "prismjs";
+
+import {EditorView as CMEditorView, dropCursor} from "@codemirror/view";
+import { highlightSpecialChars, keymap } from "@codemirror/view";
+import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
+import { indentOnInput, syntaxHighlighting, defaultHighlightStyle, bracketMatching } from "@codemirror/language";
+import {
+  autocompletion, completionKeymap, closeBrackets,
+  closeBracketsKeymap
+} from "@codemirror/autocomplete"
+import { javascript } from "@codemirror/lang-javascript";
 
 export class HtmlViewExtension implements NodeView {
     dom: HTMLElement;
     renderer: HTMLElement;
     editor: HTMLElement | null;
-    text: HTMLElement | null;
+    text: CMEditorView | null;
 
     constructor(public node: PMNode, public outerView: EditorView, public getPos: () => number | undefined) {
         this.dom = document.createElement('span');
@@ -44,10 +53,40 @@ export class HtmlViewExtension implements NodeView {
 
         this.editor.classList.add('prosemirror-inline-editor');
 
-        this.text = this.editor.appendChild(document.createElement('code'));
-        this.text.contentEditable = "true";
-        this.text.innerHTML = highlight(this.node.textContent, languages.html, 'html');
-        this.text.classList.add('language-html', 'language-js', 'language-css');
+        console.log("Creating codemirror with ", this.node.textContent);
+
+        const cmElement = document.createElement('div');
+
+        this.text = new CMEditorView({
+            doc: this.node.textContent,
+            parent: cmElement,
+            extensions: [
+                highlightSpecialChars(),
+                history(),
+                dropCursor(),
+                indentOnInput(),
+                syntaxHighlighting(defaultHighlightStyle),
+                bracketMatching(),
+                closeBrackets(),
+                autocompletion(),
+                keymap.of(
+                    [
+                        ...closeBracketsKeymap,
+                        ...defaultKeymap,
+                        ...historyKeymap,
+                        ...completionKeymap
+                    ]
+                ),
+                javascript({typescript: false})
+            ]
+        })
+
+        this.editor.appendChild(cmElement)
+
+        // this.text = this.editor.appendChild(document.createElement('code'));
+        // this.text.contentEditable = "true";
+        // this.text.innerHTML = highlight(this.node.textContent, languages.html, 'html');
+        // this.text.classList.add('language-html', 'language-js', 'language-css');
 
         let done = this.editor.appendChild(document.createElement('span'));
         done.addEventListener('click', this.sync.bind(this, this.text));
@@ -67,12 +106,12 @@ export class HtmlViewExtension implements NodeView {
         }
     }
 
-    sync(elem: HTMLElement, _: Event){
+    sync(elem: CMEditorView, _: Event){
 
         let tr = this.outerView.state.tr.replaceRangeWith(
             this.outerView.state.selection.from,
             this.outerView.state.selection.to,
-            this.outerView.state.schema.nodes['html'].create(null, this.outerView.state.schema.text(elem.textContent + ''))
+            this.outerView.state.schema.nodes['html'].create(null, this.outerView.state.schema.text(elem.state.doc.toString() + ''))
         );
 
         // Update from and to. Assume that from stays same.

@@ -1,9 +1,15 @@
 export const data = `eyyo 
 hi <boy>no</boy> oea
 
+:color[heya]{color=yellow}
+a  
+afe  
+afe  
+
 $$
 a^2
 $$
+
 
 \`\`\`C
 #include <stdio.h>

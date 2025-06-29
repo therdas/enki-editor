@@ -1,5 +1,5 @@
 @use './darcula.scss';
-@use './menu.scss';
+@use './plugins.scss';
 @use './content.scss';
 @use './fixes.scss';
 @use './prosemirror-gapcursor.scss';
@@ -10,6 +10,7 @@
 body {
   background-color: var(--background);
   font-family: sans-serif;
+  caret-color: black;
 }
 
 a {

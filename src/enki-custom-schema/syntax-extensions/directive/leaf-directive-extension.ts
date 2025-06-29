@@ -5,44 +5,8 @@ import { LeafDirective } from "mdast-util-directive"
 import { Processor } from "unified";
 import remarkDirective from "remark-directive";
 import { PhrasingContent } from "mdast";
-import { EditorView, NodeView } from "prosemirror-view";
-
-export class LeafDirectiveView implements NodeView {
-    dom: HTMLElement;
-    contentDOM?: HTMLElement | null | undefined;
-    pluginDOM?: HTMLElement | undefined;
-    header?: HTMLElement;
-    static fragmentHandlers = new Map<string, (arg: Record<string, string>) => [HTMLElement, HTMLElement, HTMLElement]>();
-
-    constructor(public node: PMNode, public outerView: EditorView, public getPos: () => number | undefined) {
-        let res = LeafDirectiveView.fragmentHandlers.get(node.attrs.name)?.call(null, { name: node.attrs.name, type: node.attrs.type, ...node.attrs.attrs }) ?? this.createFallback(node);
-
-        this.dom = res[0];
-        this.dom.classList.add('md-directive-container', 'plugin');
-
-        this.pluginDOM = res[1];
-        this.dom.appendChild(this.pluginDOM);
-
-        this.contentDOM = res[2];
-        this.dom.appendChild(this.contentDOM);
-    }
-
-    createFallback(node: PMNode) {
-        let res = document.createElement('span');
-        let mesg = res.appendChild(document.createElement('span'));
-        mesg.textContent = `This view is not handled properly, maybe a plugin is missing?\nType: ${node.attrs.type}, \nAttrs: ${JSON.stringify(node.attrs.attrs)}`;
-        mesg.contentEditable = 'false'
-        return [document.createElement('div'), res, document.createElement('div')];
-    }
-
-    static addFragmentHandlers(name: string, func: (arg: Record<string, string>) => [HTMLElement, HTMLElement, HTMLElement]) {
-        LeafDirectiveView.fragmentHandlers.set(name, func);
-    }
-
-    static clearFragmentHandlers() {
-        LeafDirectiveView.fragmentHandlers.clear();
-    }
-}
+import { NodeViewConstructor } from "prosemirror-view";
+import { DirectiveView } from "./directive-view";
 
 export class LeafDirectiveExtension extends NodeExtension
     <LeafDirective> {
@@ -107,5 +71,9 @@ export class LeafDirectiveExtension extends NodeExtension
 
     unifiedInitializationHook(processor: Processor<UnistNode, UnistNode, UnistNode, UnistNode, string>): Processor<UnistNode, UnistNode, UnistNode, UnistNode, string> {
         return processor.use(remarkDirective);
+    }
+
+    proseMirrorNodeView(): NodeViewConstructor  {
+        return (node, view, getPos) => new DirectiveView(node, view, getPos); 
     }
 }
