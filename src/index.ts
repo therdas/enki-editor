@@ -1,140 +1,44 @@
-import { data } from "./data"
+import {EditorState, Plugin} from "prosemirror-state";
+import type { EditorView } from "prosemirror-view";
 
-import { setFragmentHandler } from './enki-custom-schema/syntax-extensions/directive'
-import { EnkiEditor } from "./enki-editor"
+/**
+ * Create prompter widget
+ * @param tooltip Tooltip to show when a new blank paragraph is created and the cursor is active within it
+ * @returns ProseMirror Plugin to show an div.prosemirror-prompter with tooltip on blank lines
+ */
+export const Prompter = function(tooltip: string) {
+    return new Plugin({
+        view(editorView) {return new PrompterWidgetView(editorView, tooltip)}
+    })
+}
 
+class PrompterWidgetView {
+    tooltip: HTMLDivElement;
+    constructor(view: EditorView, private tooltipString: string) {
+        this.tooltip = document.createElement('div');
+        this.tooltip.className = "prosemirror-prompter";
+        view.dom.parentNode?.appendChild(this.tooltip);
+        this.tooltip.textContent = this.tooltipString;
 
-// class EnkiEditor {
-//     public view;
-//     // private pmu = new ProseMirrorUnified([new MarkdownExtension, new HtmlExtension]);
-//     private pmu = new ProseMirrorUnified([
-//         new efmExtension, 
-//         new eGFMExtension, 
-//         new GFMTableExtension, 
-//         new GFMEditableTasklistExtension, 
-//         new WikiLinkItemExtension, 
-//         new TaggableExtension, 
-//         new TextDirectiveExtension, 
-//         new ContainerDirectiveExtension, 
-//         new LeafDirectiveExtension,
-//         new HtmlExtension,
-//         new InlineMathExtension,
-//         new BlockMathExtension,
-//     ]);
+        this.update(view, null);
+    }
 
-//     constructor(target: HTMLElement, content: string) {
-//         target.replaceChildren();
-//         this.view = new EditorView(target, {
-//             state: EditorState.create({
-//                 doc: this.pmu.parse(content),
-//                 plugins: [
-//                     ...autocomplete(testAutocompleteOpts as ACO),
-//                     dropCursor(),
-//                     gapCursor(),
-//                     this.pmu.inputRulesPlugin(),
-//                     this.pmu.keymapPlugin(),
-//                     history(),
+    update(view: EditorView, _: EditorState | null) {
 
-//                     columnResizing({ View: TableView }),
-//                     tableEditing(),
-//                     keymap({
-//                         "Tab": goToNextCell(1),
-//                         "Shift-Tab": goToNextCell(-1),
-//                         "Mod-z": undo,
-//                         "Mod-y": redo,
-//                     }),
-//                     DragHandle,
-//                     menuPlugin([
-//                         {
-//                             command: toggleMark(this.pmu.schema().marks['strong']),
-//                             textIcon: 'format_bold',
-//                             cls: ['material-icons'],
-//                             predicate: (view) => view.state.selection.from != view.state.selection.to && !isNodeActive(view.state, 'html')
-//                         },
-//                         {
-//                             command: toggleMark(this.pmu.schema().marks['em']),
-//                             textIcon: 'format_italic',
-//                             cls: ['material-icons'],
-//                             predicate: (view) => view.state.selection.from != view.state.selection.to && !isNodeActive(view.state, 'html')
-//                         },
-//                         {
-//                             command: toggleMark(this.pmu.schema().marks['strikethrough']),
-//                             textIcon: 'strikethrough_s',
-//                             cls: ['material-icons'],
-//                             predicate: (view) => view.state.selection.from != view.state.selection.to && !isNodeActive(view.state, 'html')
-//                         },
-//                         {
-//                             command: URLSelector.openConvertDialog,
-//                             textIcon: 'link',
-//                             cls: ['material-icons'],
-//                             predicate: (view) => view.state.selection.from != view.state.selection.to && !isNodeActive(view.state, 'html')
-//                         },
-//                         {
-//                             command: toggleMark(this.pmu.schema().marks['code']),
-//                             textIcon: 'code',
-//                             cls: ['material-icons'],
-//                             predicate: (view) => view.state.selection.from != view.state.selection.to && !isNodeActive(view.state, 'html')
-//                         },
-//                         {
-//                             command: addRowAfter,
-//                             textIcon: 'add_row_below',
-//                             label: 'Add Row',
-//                             cls: ['material-icons'],
-//                             predicate: (view) => isNodeActive(view.state, 'table')
-//                         },
-//                         {
-//                             command: addColumnAfter,
-//                             textIcon: 'add_column_right',
-//                             label: 'Add Column',
-//                             cls: ['material-icons'],
-//                             predicate: (view) => isNodeActive(view.state, 'table')
-//                         }
-//                     ])
-//                 ],
-//                 schema: this.pmu.schema(),
-//             }),
-//             nodeViews: {
-//                 ...this.pmu.nodeViews(),
-//             }
-//         })
-//     }
-// }
+        let selection = view.state.selection.$anchor;
+        let node = selection.node(selection.depth);
 
-setFragmentHandler({
-    leaf: [
-        {
-            name: 'youtube',
-            func: (args) => {
-                const url = args.url;
-                const elem = document.createElement('iframe');
-
-                elem.width = "500";
-                elem.height = "350";
-                elem.title = "YouTube Video Player";
-                elem.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
-                elem.referrerPolicy = "strict-origin-when-cross-origin";
-                elem.allowFullscreen = true;
-                elem.src = url;
-
-                return [document.createElement('span') as HTMLElement, elem as HTMLElement, document.createElement('span') as HTMLElement];
-            }
+        if(node.textContent.trim().length == 0) {
+            this.tooltip.style.display = 'block';
+        } else {
+            this.tooltip.style.display = 'none';
         }
-    ],
-    text: [
-        {
-            name: 'color',
-            func:(args) => {
-                const color = args.color;
-                const elem = document.createElement('span');
-                elem.style.color = color;
 
-                return [document.createElement('span'), undefined, elem];
-            }
-        }
-    ]
-})
+        let pos = view.coordsAtPos(selection.pos - selection.parentOffset);
 
-window.onload = () => {
-    let place = document.querySelector("#editor");
-    let _ = new EnkiEditor(<HTMLElement>place, data);
+        this.tooltip.style.position = 'absolute';
+        this.tooltip.style.left = pos.left + 'px';
+        this.tooltip.style.top = pos.top + 'px';
+        this.tooltip.style.transform = 'translateY(-1em)'
+    }
 }
